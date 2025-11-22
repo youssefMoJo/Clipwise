@@ -72,9 +72,14 @@ export const handler = async (event) => {
 
     // Call RapidAPI to fetch video metadata
     const response = await axios.get(
-      "https://social-media-video-downloader.p.rapidapi.com/smvd/get/youtube",
+      "https://social-media-video-downloader.p.rapidapi.com/youtube/v3/video/details",
       {
-        params: { url: youtube_link },
+        params: {
+          videoId: youtube_id,
+          renderableFormats: "720p,highres",
+          urlAccess: "proxied",
+          getTranscript: "false",
+        },
         headers: {
           "X-RapidAPI-Key": RAPID_API_KEY,
           "X-RapidAPI-Host": "social-media-video-downloader.p.rapidapi.com",
@@ -85,7 +90,7 @@ export const handler = async (event) => {
     const data = response.data;
 
     // Check video duration - reject if exceeds 10 minutes (600 seconds)
-    const durationInSeconds = data.stats.lengthSeconds;
+    const durationInSeconds = data.metadata.additionalData.duration;
     const maxDurationSeconds = 10 * 60; // 10 minutes in seconds
 
     if (durationInSeconds > maxDurationSeconds) {
@@ -101,13 +106,9 @@ export const handler = async (event) => {
 
     const metadata = {
       video_id: extractYouTubeID(youtube_link),
-      title: data.title,
-      description: data.stats.description || "",
-      picture: data.picture,
+      title: data.metadata.title,
+      picture: data.metadata.thumbnailUrl,
       duration: durationInSeconds,
-      // links: data.links,
-      user_url: data.author.user_url,
-      user_name: data.author.name,
       youtube_link,
       uploaded_by,
       status: "pending", //Track processing lifecycle: pending, processing, done, failed
@@ -143,12 +144,36 @@ export const handler = async (event) => {
       }),
     };
   } catch (err) {
-    console.error(err);
+    console.error("🔥 FULL ERROR:", err);
+
+    if (err.response) {
+      console.error("📌 RapidAPI Error Response:", err.response.data);
+      return {
+        statusCode: err.response.status || 500,
+        body: JSON.stringify({
+          message: "RapidAPI request failed",
+          status: err.response.status,
+          rapidapi_error: err.response.data,
+        }),
+      };
+    }
+
+    if (err.request) {
+      console.error("⚠️ RapidAPI No Response:", err.request);
+      return {
+        statusCode: 504,
+        body: JSON.stringify({
+          message: "No response from RapidAPI",
+          rapidapi_error: "No response received",
+        }),
+      };
+    }
+
     return {
       statusCode: 500,
       body: JSON.stringify({
         message: "Error processing video",
-        error: err.message,
+        error: err.message || "Unknown error",
       }),
     };
   }
