@@ -21,7 +21,7 @@ fi
 import browser_cookie3
 from http.cookiejar import MozillaCookieJar
 
-cj = browser_cookie3.chrome()
+cj = browser_cookie3.chrome(cookie_file=None, domain_name=".youtube.com")
 netscape_cj = MozillaCookieJar("$COOKIE_FILE")
 for cookie in cj:
     netscape_cj.set_cookie(cookie)

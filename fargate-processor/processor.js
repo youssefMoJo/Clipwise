@@ -13,6 +13,7 @@ import {
   DynamoDBClient,
   UpdateItemCommand,
   PutItemCommand,
+  GetItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 import {
@@ -193,6 +194,8 @@ const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 const VIDEO_ID = process.env.VIDEO_ID;
 const YOUTUBE_LINK = process.env.YOUTUBE_LINK;
 const DYNAMO_VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
+const DYNAMO_USERS_TABLE = process.env.DYNAMO_USERS_TABLE || "safetube_users";
+const UPLOADED_BY = process.env.UPLOADED_BY; // user_id from processVideo Lambda
 const RETRY_COUNT = parseInt(process.env.RETRY_COUNT || "0", 10);
 const MAX_RETRIES = 0;
 
@@ -807,6 +810,60 @@ const main = async () => {
 
     console.log("Audio processing and transcription complete.");
     await updateVideoStatus(VIDEO_ID, "done", null, RETRY_COUNT);
+
+    // Add video_id to user's videos array in DynamoDB (atomic update)
+    if (UPLOADED_BY && DYNAMO_USERS_TABLE) {
+      try {
+        // First, get the current user record to check if video_id already exists
+        const getUserParams = {
+          TableName: DYNAMO_USERS_TABLE,
+          Key: { user_id: { S: UPLOADED_BY } },
+        };
+        const userResult = await dynamo.send(new GetItemCommand(getUserParams));
+
+        if (userResult.Item) {
+          const currentVideos = userResult.Item.videos?.L || [];
+          const videoIds = currentVideos.map((v) => v.S || v);
+
+          // Only add if not already present (idempotent)
+          if (!videoIds.includes(VIDEO_ID)) {
+            const updateParams = {
+              TableName: DYNAMO_USERS_TABLE,
+              Key: { user_id: { S: UPLOADED_BY } },
+              UpdateExpression:
+                "SET videos = list_append(if_not_exists(videos, :empty_list), :video_id)",
+              ExpressionAttributeValues: {
+                ":empty_list": { L: [] },
+                ":video_id": { L: [{ S: VIDEO_ID }] },
+              },
+            };
+            await dynamo.send(new UpdateItemCommand(updateParams));
+            console.log(
+              `Added video ${VIDEO_ID} to user ${UPLOADED_BY}'s videos array`
+            );
+          } else {
+            console.log(
+              `Video ${VIDEO_ID} already exists in user ${UPLOADED_BY}'s videos array`
+            );
+          }
+        } else {
+          console.warn(
+            `User ${UPLOADED_BY} not found in users table, skipping video addition`
+          );
+        }
+      } catch (userUpdateErr) {
+        console.error(
+          "Failed to add video to user's videos array:",
+          userUpdateErr
+        );
+        // Don't fail the entire process if this update fails
+      }
+    } else {
+      console.warn(
+        "UPLOADED_BY or DYNAMO_USERS_TABLE not set, skipping user video update"
+      );
+    }
+
     process.exit(0);
   } catch (error) {
     console.error("Error during processing:", error);

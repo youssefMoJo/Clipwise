@@ -6,7 +6,7 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-
+// this is the main lambda handler for processing video metadata requests
 const client = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(client);
 const sqsClient = new SQSClient({});
@@ -29,16 +29,52 @@ function extractYouTubeID(url) {
   return null;
 }
 
+// Extract user_id from Cognito JWT token (from API Gateway authorizer context)
+function getUserIdFromEvent(event) {
+  // API Gateway Cognito authorizer adds the user info in requestContext
+  const claims = event.requestContext?.authorizer?.claims;
+  if (!claims) {
+    console.error("No authorizer claims found in event");
+    return null;
+  }
+  if (!claims.sub) {
+    console.error("No user sub found in claims");
+    return null;
+  }
+  return claims.sub;
+}
+
 export const handler = async (event) => {
   try {
-    const body = JSON.parse(event.body);
-    const { youtube_link, uploaded_by } = body;
+    // Get user_id from JWT token (set by Cognito authorizer)
+    const userId = getUserIdFromEvent(event);
 
-    if (!youtube_link || !uploaded_by) {
+    if (!userId) {
+      console.error("Unauthorized access: user ID not found in token");
+      return {
+        statusCode: 401,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+        body: JSON.stringify({
+          message: "Unauthorized - user ID not found in token",
+        }),
+      };
+    }
+
+    const body = JSON.parse(event.body);
+    const { youtube_link } = body;
+
+    if (!youtube_link) {
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({
-          message: "Missing youtube_link or uploaded_by",
+          message: "Missing youtube_link",
         }),
       };
     }
@@ -47,6 +83,10 @@ export const handler = async (event) => {
     if (!youtube_id) {
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({ message: "Invalid YouTube URL" }),
       };
     }
@@ -62,6 +102,10 @@ export const handler = async (event) => {
       console.log("Video already exists in DB:", youtube_id);
       return {
         statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({
           message: "Video already exists. No need to download.",
           video_id: youtube_id,
@@ -96,6 +140,10 @@ export const handler = async (event) => {
     if (durationInSeconds > maxDurationSeconds) {
       return {
         statusCode: 400,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({
           message:
             "Video duration exceeds 10 minutes. Maximum allowed duration is 10 minutes.",
@@ -110,7 +158,7 @@ export const handler = async (event) => {
       picture: data.metadata.thumbnailUrl,
       duration: durationInSeconds,
       youtube_link,
-      uploaded_by,
+      uploaded_by: userId, // Cognito user ID from JWT token
       status: "pending", //Track processing lifecycle: pending, processing, done, failed
       created_at: new Date().toISOString(),
     };
@@ -118,7 +166,7 @@ export const handler = async (event) => {
     // Save metadata to DynamoDB
     await ddb.send(
       new PutCommand({
-        TableName: "safetube_videos",
+        TableName: VIDEOS_TABLE,
         Item: metadata,
       })
     );
@@ -138,6 +186,10 @@ export const handler = async (event) => {
 
     return {
       statusCode: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
       body: JSON.stringify({
         message: "Video metadata saved and processing job queued",
         video_id: metadata.video_id,
@@ -150,6 +202,10 @@ export const handler = async (event) => {
       console.error("📌 RapidAPI Error Response:", err.response.data);
       return {
         statusCode: err.response.status || 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({
           message: "RapidAPI request failed",
           status: err.response.status,
@@ -162,6 +218,10 @@ export const handler = async (event) => {
       console.error("⚠️ RapidAPI No Response:", err.request);
       return {
         statusCode: 504,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
         body: JSON.stringify({
           message: "No response from RapidAPI",
           rapidapi_error: "No response received",
@@ -171,6 +231,10 @@ export const handler = async (event) => {
 
     return {
       statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
       body: JSON.stringify({
         message: "Error processing video",
         error: err.message || "Unknown error",

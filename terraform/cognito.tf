@@ -9,7 +9,6 @@ resource "aws_cognito_user_pool" "safetube_user_pool" {
     require_uppercase = false
   }
 
-  auto_verified_attributes = ["email"]
 
   tags = {
     Environment = "dev"

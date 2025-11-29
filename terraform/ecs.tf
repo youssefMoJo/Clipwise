@@ -51,7 +51,9 @@ resource "aws_ecs_task_definition" "safetube_task" {
         },
         { name = "TRANSCRIBE_OUTPUT_BUCKET", value = aws_s3_bucket.transcribe_output_bucket.bucket },
         { name = "COOKIES_BUCKET", value = aws_s3_bucket.cookies_bucket.bucket },
-        { name = "COOKIES_KEY", value = "all_cookies.txt" }
+        { name = "COOKIES_KEY", value = "all_cookies.txt" },
+        { name = "DYNAMO_VIDEOS_TABLE", value = aws_dynamodb_table.safetube_videos.name },
+        { name = "DYNAMO_USERS_TABLE", value = aws_dynamodb_table.safetube_users.name }
 
       ],
       logConfiguration = {

@@ -88,6 +88,26 @@ resource "aws_iam_policy" "lambda_exec_policy" {
           "iam:PassRole"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cognito-idp:SignUp",
+          "cognito-idp:InitiateAuth",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ],
+        Resource = "*"
       }
     ]
   })

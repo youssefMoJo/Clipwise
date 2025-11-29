@@ -31,7 +31,17 @@ for folder_path in "${FOLDERS[@]}"; do
   FUNCTION_FOLDER=$(basename "$folder_path")
   ZIP_FILE="${FUNCTION_FOLDER}.zip"
 
-  echo "🔄 Zipping Lambda code for '${FUNCTION_FOLDER}'..."
+  echo "🔄 Preparing Lambda folder '${FUNCTION_FOLDER}'..."
+
+  # Check if node_modules exists, if not run npm install
+  if [ ! -d "$folder_path/node_modules" ]; then
+    echo "📦 node_modules not found. Running npm install --production..."
+    pushd "$folder_path" > /dev/null
+    npm install --production
+    popd > /dev/null
+  else
+    echo "✅ node_modules found. Skipping npm install."
+  fi
 
   # Remove old zip if exists
   [ -f "$folder_path/$ZIP_FILE" ] && rm "$folder_path/$ZIP_FILE"
