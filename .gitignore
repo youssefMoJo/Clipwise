@@ -1,4 +1,9 @@
 # AWS credentials
 *.pem
 .aws/
-/VideosForTesting.txtscripts/cookie_refresh.log
+
+# Testing files
+/VideosForTesting.txt
+
+# Log files
+scripts/cookie_refresh.log
