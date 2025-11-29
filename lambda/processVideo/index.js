@@ -162,8 +162,60 @@ export const handler = async (event) => {
             status: "done",
           }),
         };
+      } else if (
+        existing.Item.status === "failed" ||
+        existing.Item.status === "failed_permanent"
+      ) {
+        // Video failed previously - allow retry by updating status and re-queuing
+        console.log(
+          `Video ${youtube_id} previously failed with status ${existing.Item.status}. Retrying...`
+        );
+
+        // Update video status to pending for retry
+        await ddb.send(
+          new UpdateCommand({
+            TableName: VIDEOS_TABLE,
+            Key: { video_id: youtube_id },
+            UpdateExpression: "SET #status = :pending, retry_count = :zero",
+            ExpressionAttributeNames: {
+              "#status": "status",
+            },
+            ExpressionAttributeValues: {
+              ":pending": "pending",
+              ":zero": 0,
+            },
+          })
+        );
+
+        // Re-queue the video for processing
+        const sendMessageParams = {
+          QueueUrl: SQS_QUEUE_URL,
+          MessageBody: JSON.stringify({
+            video_id: youtube_id,
+            youtube_link: youtube_link,
+            uploaded_by: userId,
+            dynamo_videos_table: VIDEOS_TABLE,
+            retry_count: 0,
+          }),
+        };
+        await sqsClient.send(new SendMessageCommand(sendMessageParams));
+
+        console.log(`Retrying failed video ${youtube_id}`);
+
+        return {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message: "Video retry initiated (previously failed)",
+            video_id: youtube_id,
+            status: "pending",
+          }),
+        };
       } else {
-        // Video is still being processed
+        // Video is currently being processed (pending or processing status)
         console.log("Video is being processed:", youtube_id);
         return {
           statusCode: 200,
