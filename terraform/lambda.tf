@@ -10,9 +10,10 @@ resource "aws_lambda_function" "process_video" {
 
   environment {
     variables = {
-      RAPID_API_KEY = var.rapid_api_key
-      SQS_QUEUE_URL   = aws_sqs_queue.video_processing_queue.id
+      RAPID_API_KEY       = var.rapid_api_key
+      SQS_QUEUE_URL       = aws_sqs_queue.video_processing_queue.id
       DYNAMO_VIDEOS_TABLE = aws_dynamodb_table.safetube_videos.name
+      DYNAMO_USERS_TABLE  = aws_dynamodb_table.safetube_users.name
     }
   }
 

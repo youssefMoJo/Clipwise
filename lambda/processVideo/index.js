@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
   GetCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 // this is the main lambda handler for processing video metadata requests
@@ -14,6 +15,7 @@ const sqsClient = new SQSClient({});
 const RAPID_API_KEY = process.env.RAPID_API_KEY;
 const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 const VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
+const USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
 
 function extractYouTubeID(url) {
   try {
@@ -98,20 +100,84 @@ export const handler = async (event) => {
       })
     );
 
-    if (existing.Item && existing.Item.status === "done") {
-      console.log("Video already exists in DB:", youtube_id);
-      return {
-        statusCode: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-        body: JSON.stringify({
-          message: "Video already exists. No need to download.",
-          video_id: youtube_id,
-          s3_key: existing.Item.s3_key,
-        }),
-      };
+    // Video exists - check status and handle accordingly
+    if (existing.Item) {
+      if (existing.Item.status === "done") {
+        console.log("Video already processed:", youtube_id);
+
+        // Check if video is already in user's videos array
+        const userResult = await ddb.send(
+          new GetCommand({
+            TableName: USERS_TABLE,
+            Key: { user_id: userId },
+          })
+        );
+
+        const userVideos = userResult.Item?.videos || [];
+
+        if (userVideos.includes(youtube_id)) {
+          // Video already in user's library
+          return {
+            statusCode: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+            body: JSON.stringify({
+              message: "Video already in your library",
+              video_id: youtube_id,
+              status: "done",
+            }),
+          };
+        }
+
+        // Video exists but not in user's array - add it (resource reuse)
+        await ddb.send(
+          new UpdateCommand({
+            TableName: USERS_TABLE,
+            Key: { user_id: userId },
+            UpdateExpression:
+              "SET videos = list_append(if_not_exists(videos, :empty), :video)",
+            ExpressionAttributeValues: {
+              ":empty": [],
+              ":video": [youtube_id],
+            },
+          })
+        );
+
+        console.log(
+          `Added existing video ${youtube_id} to user ${userId}'s library`
+        );
+
+        return {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message:
+              "Video added to your library (previously processed - no re-processing needed)",
+            video_id: youtube_id,
+            status: "done",
+          }),
+        };
+      } else {
+        // Video is still being processed
+        console.log("Video is being processed:", youtube_id);
+        return {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message: "Video is currently being processed",
+            video_id: youtube_id,
+            status: existing.Item.status,
+          }),
+        };
+      }
     }
 
     // Call RapidAPI to fetch video metadata
