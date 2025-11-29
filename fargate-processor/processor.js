@@ -199,6 +199,16 @@ const UPLOADED_BY = process.env.UPLOADED_BY; // user_id from processVideo Lambda
 const RETRY_COUNT = parseInt(process.env.RETRY_COUNT || "0", 10);
 const MAX_RETRIES = 0;
 
+// Log environment variables for debugging
+console.log("=== Environment Variables ===");
+console.log("VIDEO_ID:", VIDEO_ID);
+console.log("YOUTUBE_LINK:", YOUTUBE_LINK);
+console.log("UPLOADED_BY:", UPLOADED_BY);
+console.log("DYNAMO_VIDEOS_TABLE:", DYNAMO_VIDEOS_TABLE);
+console.log("DYNAMO_USERS_TABLE:", DYNAMO_USERS_TABLE);
+console.log("RETRY_COUNT:", RETRY_COUNT);
+console.log("============================");
+
 const transcribe = new TranscribeClient({ region: REGION });
 const TRANSCRIBE_OUTPUT_BUCKET = process.env.TRANSCRIBE_OUTPUT_BUCKET;
 
@@ -811,10 +821,19 @@ const main = async () => {
     console.log("Audio processing and transcription complete.");
     await updateVideoStatus(VIDEO_ID, "done", null, RETRY_COUNT);
 
-    // Add video_id to user's videos array in DynamoDB (atomic update)
-    if (UPLOADED_BY && DYNAMO_USERS_TABLE) {
+    // Add video_id to user's videos array in DynamoDB
+    console.log("Starting user video update...");
+    console.log("UPLOADED_BY:", UPLOADED_BY);
+    console.log("DYNAMO_USERS_TABLE:", DYNAMO_USERS_TABLE);
+
+    if (!UPLOADED_BY) {
+      console.error("❌ CRITICAL: UPLOADED_BY environment variable is not set!");
+      console.error("Cannot add video to user's array. Check SQS message and ECS task configuration.");
+    } else if (!DYNAMO_USERS_TABLE) {
+      console.error("❌ CRITICAL: DYNAMO_USERS_TABLE environment variable is not set!");
+    } else {
       try {
-        // First, get the current user record to check if video_id already exists
+        // Get current user record
         const getUserParams = {
           TableName: DYNAMO_USERS_TABLE,
           Key: { user_id: { S: UPLOADED_BY } },
@@ -822,46 +841,45 @@ const main = async () => {
         const userResult = await dynamo.send(new GetItemCommand(getUserParams));
 
         if (userResult.Item) {
+          // User exists - add video to their array
           const currentVideos = userResult.Item.videos?.L || [];
           const videoIds = currentVideos.map((v) => v.S || v);
 
-          // Only add if not already present (idempotent)
           if (!videoIds.includes(VIDEO_ID)) {
             const updateParams = {
               TableName: DYNAMO_USERS_TABLE,
               Key: { user_id: { S: UPLOADED_BY } },
-              UpdateExpression:
-                "SET videos = list_append(if_not_exists(videos, :empty_list), :video_id)",
+              UpdateExpression: "SET videos = list_append(if_not_exists(videos, :empty_list), :video_id)",
               ExpressionAttributeValues: {
                 ":empty_list": { L: [] },
                 ":video_id": { L: [{ S: VIDEO_ID }] },
               },
             };
             await dynamo.send(new UpdateItemCommand(updateParams));
-            console.log(
-              `Added video ${VIDEO_ID} to user ${UPLOADED_BY}'s videos array`
-            );
+            console.log(`✅ Added video ${VIDEO_ID} to user ${UPLOADED_BY}'s videos array`);
           } else {
-            console.log(
-              `Video ${VIDEO_ID} already exists in user ${UPLOADED_BY}'s videos array`
-            );
+            console.log(`ℹ️ Video ${VIDEO_ID} already exists in user ${UPLOADED_BY}'s videos array`);
           }
         } else {
-          console.warn(
-            `User ${UPLOADED_BY} not found in users table, skipping video addition`
-          );
+          // User doesn't exist - create record with this video
+          console.log(`⚠️ User ${UPLOADED_BY} not found in users table. Creating user record...`);
+
+          const putParams = {
+            TableName: DYNAMO_USERS_TABLE,
+            Item: {
+              user_id: { S: UPLOADED_BY },
+              videos: { L: [{ S: VIDEO_ID }] },
+              created_at: { S: new Date().toISOString() }
+            }
+          };
+          await dynamo.send(new PutItemCommand(putParams));
+          console.log(`✅ Created user record and added video ${VIDEO_ID} for user ${UPLOADED_BY}`);
         }
       } catch (userUpdateErr) {
-        console.error(
-          "Failed to add video to user's videos array:",
-          userUpdateErr
-        );
+        console.error("❌ ERROR: Failed to add video to user's videos array:", userUpdateErr);
+        console.error("Error details:", JSON.stringify(userUpdateErr, null, 2));
         // Don't fail the entire process if this update fails
       }
-    } else {
-      console.warn(
-        "UPLOADED_BY or DYNAMO_USERS_TABLE not set, skipping user video update"
-      );
     }
 
     process.exit(0);
