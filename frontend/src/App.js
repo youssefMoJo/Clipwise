@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import "./App.css";
 import Onboarding from "./components/Onboarding";
 import Auth from "./components/Auth";
+import AddVideo from "./components/AddVideo";
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAddVideo, setShowAddVideo] = useState(true);
+  const [videoInsights, setVideoInsights] = useState(null);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -14,6 +17,11 @@ function App() {
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);
+  };
+
+  const handleVideoSubmit = (insights) => {
+    setVideoInsights(insights);
+    setShowAddVideo(false);
   };
 
   const handleLogout = () => {
@@ -47,6 +55,10 @@ function App() {
     return <Auth onAuthSuccess={handleAuthSuccess} />;
   }
 
+  if (showAddVideo) {
+    return <AddVideo onVideoSubmit={handleVideoSubmit} />;
+  }
+
   const isGuest = localStorage.getItem("is_guest") === "true";
 
   return (
@@ -58,6 +70,13 @@ function App() {
           Welcome, guest! Sign up anytime to keep your insights safe.
         </p>
       )}
+      {videoInsights && (
+        <div>
+          <h2>Video Insights</h2>
+          <pre>{JSON.stringify(videoInsights, null, 2)}</pre>
+        </div>
+      )}
+      <button onClick={() => setShowAddVideo(true)}>Add Another Video</button>
       <button onClick={() => setShowOnboarding(true)}>
         View Onboarding Again
       </button>
