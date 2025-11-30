@@ -1,5 +1,22 @@
 import React, { useState } from "react";
-import "./Onboarding.css";
+import {
+  OnboardingContainer,
+  OnboardingHeader,
+  SkipButton,
+  SlidesContainer,
+  SlidesWrapper,
+  Slide,
+  SlideIllustration,
+  Illustration,
+  IllustrationIcon,
+  SlideContent,
+  SlideTitle,
+  SlideDescription,
+  OnboardingFooter,
+  DotsContainer,
+  Dot,
+  NextButton,
+} from "./Onboarding.styled";
 
 const Onboarding = ({ onComplete }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -78,61 +95,52 @@ const Onboarding = ({ onComplete }) => {
   };
 
   return (
-    <div
-      className="onboarding-container"
-      style={{
-        "--bg-color-1": slides[currentSlide].bgColor1,
-        "--bg-color-2": slides[currentSlide].bgColor2,
-      }}
+    <OnboardingContainer
+      $bgColor1={slides[currentSlide].bgColor1}
+      $bgColor2={slides[currentSlide].bgColor2}
     >
-      <div className="onboarding-header">
-        <button className="skip-button" onClick={handleSkip}>
-          Skip
-        </button>
-      </div>
+      <OnboardingHeader>
+        <SkipButton onClick={handleSkip}>Skip</SkipButton>
+      </OnboardingHeader>
 
-      <div
-        className="slides-container"
+      <SlidesContainer
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <div
-          className="slides-wrapper"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-        >
-          {slides.map((slide, index) => (
-            <div key={slide.id} className="slide">
-              <div className="slide-illustration">
-                <div className={`illustration ${slide.illustration}`}>
-                  <span className="illustration-icon">{slide.icon}</span>
-                </div>
-              </div>
-              <div className="slide-content">
-                <h1 className="slide-title">{slide.title}</h1>
-                <p className="slide-description">{slide.description}</p>
-              </div>
-            </div>
+        <SlidesWrapper $currentSlide={currentSlide}>
+          {slides.map((slide) => (
+            <Slide key={slide.id}>
+              <SlideIllustration>
+                <Illustration $type={slide.illustration}>
+                  <IllustrationIcon>{slide.icon}</IllustrationIcon>
+                </Illustration>
+              </SlideIllustration>
+              <SlideContent>
+                <SlideTitle>{slide.title}</SlideTitle>
+                <SlideDescription>{slide.description}</SlideDescription>
+              </SlideContent>
+            </Slide>
           ))}
-        </div>
-      </div>
+        </SlidesWrapper>
+      </SlidesContainer>
 
-      <div className="onboarding-footer">
-        <div className="dots-container">
+      <OnboardingFooter>
+        <DotsContainer>
           {slides.map((_, index) => (
-            <div
+            <Dot
               key={index}
-              className={`dot ${index === currentSlide ? "active" : ""}`}
+              $active={index === currentSlide}
               onClick={() => setCurrentSlide(index)}
             />
           ))}
-        </div>
+        </DotsContainer>
 
-        <button className="next-button" onClick={handleNext}>
+        <NextButton onClick={handleNext}>
           {currentSlide === slides.length - 1 ? "Get Started" : "Next"}
-        </button>
-      </div>
-    </div>
+        </NextButton>
+      </OnboardingFooter>
+    </OnboardingContainer>
   );
 };
 
