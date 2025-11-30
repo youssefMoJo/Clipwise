@@ -94,7 +94,9 @@ const Auth = ({ onAuthSuccess }) => {
 
   const handleGuestLogin = () => {
     // Generate a unique guest ID
-    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const guestId = `guest_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
     // Store guest session
     localStorage.setItem("guest_id", guestId);
@@ -108,7 +110,7 @@ const Auth = ({ onAuthSuccess }) => {
     <AuthContainer>
       <AuthCard>
         <AuthHeader>
-          <AuthLogo>ClipWise</AuthLogo>
+          <AuthLogo src="/Logo.png" alt="ClipWise Logo" />
           <AuthSubtitle>Your AI-powered video insights platform</AuthSubtitle>
         </AuthHeader>
 
@@ -165,14 +167,14 @@ const Auth = ({ onAuthSuccess }) => {
           </AuthSubmitBtn>
         </AuthForm>
 
-        <AuthFooter>
+        {/* <AuthFooter>
           <p>
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <LinkBtn onClick={toggleMode} disabled={loading}>
               {isSignUp ? "Log In" : "Sign Up"}
             </LinkBtn>
           </p>
-        </AuthFooter>
+        </AuthFooter> */}
 
         <GuestSection>
           <GuestBtn onClick={handleGuestLogin} disabled={loading}>

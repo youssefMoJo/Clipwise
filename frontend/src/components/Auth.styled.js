@@ -24,7 +24,6 @@ const shake = keyframes`
 `;
 
 export const AuthContainer = styled.div`
-  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
@@ -38,6 +37,7 @@ export const AuthContainer = styled.div`
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   @media (max-width: 640px) {
     padding: 0.75rem;
@@ -57,6 +57,7 @@ export const AuthCard = styled.div`
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: ${slideUp} 0.5s ease-out;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   @media (max-width: 640px) {
     border-radius: 20px;
@@ -66,6 +67,8 @@ export const AuthCard = styled.div`
   @media (max-width: 480px) {
     border-radius: 16px;
     padding: 1.5rem 1rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
 
   @media (max-width: 360px) {
@@ -87,25 +90,22 @@ export const AuthHeader = styled.div`
   }
 `;
 
-export const AuthLogo = styled.h1`
-  font-size: 2.2rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 0.5rem;
+export const AuthLogo = styled.img`
+  width: 150px;
+  height: auto;
+  margin: 0 auto 0.5rem;
+  display: block;
 
   @media (max-width: 640px) {
-    font-size: 2rem;
+    width: 180px;
   }
 
   @media (max-width: 480px) {
-    font-size: 1.7rem;
+    width: 160px;
   }
 
   @media (max-width: 360px) {
-    font-size: 1.5rem;
+    width: 140px;
   }
 `;
 
