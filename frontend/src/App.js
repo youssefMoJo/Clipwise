@@ -5,7 +5,7 @@ import Auth from "./components/Auth";
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
