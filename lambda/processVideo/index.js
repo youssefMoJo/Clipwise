@@ -253,7 +253,7 @@ export const handler = async (event) => {
 
     // Check video duration - reject if exceeds 10 minutes (600 seconds)
     const durationInSeconds = data.metadata.additionalData.duration;
-    const maxDurationSeconds = 10 * 60; // 10 minutes in seconds
+    const maxDurationSeconds = 20 * 60; // 10 minutes in seconds
 
     if (durationInSeconds > maxDurationSeconds) {
       return {

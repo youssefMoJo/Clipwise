@@ -48,7 +48,46 @@ resource "aws_lambda_event_source_mapping" "sqs_to_trigger_ecs" {
   event_source_arn  = aws_sqs_queue.video_processing_queue.arn
   function_name     = aws_lambda_function.trigger_ecs.arn
   batch_size        = 1
+  enabled           = false  # Disabled for migration - will use video_transcript_worker instead
+}
+
+# New Lambda-based video processor (replaces ECS/Fargate)
+resource "aws_lambda_function" "video_transcript_worker" {
+  function_name = "videoTranscriptWorker"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/videoTranscriptWorker/videoTranscriptWorker.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/videoTranscriptWorker/videoTranscriptWorker.zip")
+
+  timeout     = 600  # 15 minutes - sufficient for transcript + AI processing
+  memory_size = 512  # 512MB - enough for API calls and JSON processing
+
+  environment {
+    variables = {
+      RAPIDAPI_KEY_1           = var.RAPIDAPI_KEY_1
+      RAPIDAPI_KEY_2           = var.RAPIDAPI_KEY_2
+      RAPIDAPI_KEY_3           = var.RAPIDAPI_KEY_3
+      RAPIDAPI_KEY_4           = var.RAPIDAPI_KEY_4
+      DYNAMO_VIDEOS_TABLE      = aws_dynamodb_table.safetube_videos.name
+      DYNAMO_USERS_TABLE       = aws_dynamodb_table.safetube_users.name
+      TRANSCRIBE_OUTPUT_BUCKET = aws_s3_bucket.transcribe_output_bucket.bucket
+      SQS_QUEUE_URL            = aws_sqs_queue.video_processing_queue.id
+      VIDEO_DLQ_URL            = aws_sqs_queue.video_dlq.id
+      SUPADATA_API_KEY         = var.supadata_api_key
+    }
+  }
+}
+
+resource "aws_lambda_event_source_mapping" "sqs_to_video_transcript_worker" {
+  event_source_arn  = aws_sqs_queue.video_processing_queue.arn
+  function_name     = aws_lambda_function.video_transcript_worker.arn
+  batch_size        = 1
   enabled           = true
+
+  function_response_types = ["ReportBatchItemFailures"]  # Enable partial batch failure handling
 }
 
 # Sign-up Lambda

@@ -1,0 +1,25 @@
+# Example Terraform Variables for Lambda Migration
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region = "us-east-1"
+
+# RapidAPI Keys (for OpenAI integration)
+RAPIDAPI_KEY_1 = "your-rapidapi-key-1"
+RAPIDAPI_KEY_2 = "your-rapidapi-key-2"
+RAPIDAPI_KEY_3 = "your-rapidapi-key-3"
+RAPIDAPI_KEY_4 = "your-rapidapi-key-4"
+
+# Legacy RapidAPI key (for processVideo Lambda)
+rapid_api_key = "your-legacy-rapidapi-key"
+
+# Supadata API Key (NEW - required for Lambda migration)
+# This replaces AWS Transcribe and yt-dlp
+# Get your API key from: https://supadata.ai
+supadata_api_key = "sd_your_supadata_api_key_here"
+
+# ECS/Fargate Configuration (legacy - can be kept for rollback)
+ecr_image_url      = "your-account-id.dkr.ecr.us-east-1.amazonaws.com/safetube-processor:latest"
+sqs_queue_url      = "https://sqs.us-east-1.amazonaws.com/your-account-id/SafeTube-VideoProcessingQueue"
+subnet_ids         = ["subnet-xxxxxxxx", "subnet-yyyyyyyy"]
+security_group_id  = "sg-xxxxxxxxx"
