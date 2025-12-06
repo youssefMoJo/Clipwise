@@ -15,9 +15,9 @@ export const API_ENDPOINTS = {
   LOG_IN: "/login",
 
   // Video Operations
-  PROCESS_VIDEO: "/process-video",
+  PROCESS_VIDEO: "/process",
   GET_VIDEOS: "/videos",
-  GET_VIDEO_DETAILS: "/video",
+  GET_VIDEO_DETAILS: "/videos",
   DELETE_VIDEO: "/video",
 
   // User Operations

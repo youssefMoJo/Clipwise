@@ -27,9 +27,9 @@ const getAuthHeaders = () => {
       headers["X-Guest-ID"] = guestId;
     }
   } else {
-    const accessToken = localStorage.getItem("access_token");
-    if (accessToken) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
+    const idToken = localStorage.getItem("id_token");
+    if (idToken) {
+      headers["Authorization"] = `Bearer ${idToken}`;
     }
   }
 
@@ -124,7 +124,7 @@ export const logIn = async (email, password) => {
 export const processVideo = async (videoUrl) => {
   return apiRequest(API_ENDPOINTS.PROCESS_VIDEO, {
     method: HTTP_METHODS.POST,
-    body: JSON.stringify({ video_url: videoUrl }),
+    body: JSON.stringify({ youtube_link: videoUrl }),
   });
 };
 
@@ -177,7 +177,7 @@ export const getUserProfile = async () => {
  */
 export const isAuthenticated = () => {
   return (
-    localStorage.getItem("access_token") ||
+    localStorage.getItem("id_token") ||
     localStorage.getItem("is_guest") === "true"
   );
 };
