@@ -7,7 +7,12 @@ import {
   GetItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 
 const dynamoClient = new DynamoDBClient({});
 const sqsClient = new SQSClient({});
@@ -69,63 +74,96 @@ export const handler = async (event) => {
       // Update status to processing
       await updateVideoStatus(videoId, "processing", null, retryCount);
 
-      // Step 1: Get transcript from Transcript API
-      console.log("[INFO] Fetching transcript from Transcript API", {
-        youtubeLink,
-      });
-      const transcriptText = await getTranscriptFromAPI(youtubeLink);
+      // Extract YouTube ID for S3 key generation
+      const youtubeId = extractYouTubeID(youtubeLink);
 
-      if (!transcriptText || transcriptText.trim().length === 0) {
-        throw new Error("Transcript API returned empty transcript");
+      // Check if transcript and insights already exist in S3
+      const existingTranscript = await findExistingS3File(
+        `transcription-${youtubeId}`
+      );
+      const existingInsights = await findExistingS3File(`insights-${youtubeId}`);
+
+      let transcriptText;
+      let transcriptS3Key;
+      let insightsS3Key;
+      let normalizedInsights;
+
+      // Step 1: Get or reuse transcript
+      if (existingTranscript) {
+        console.log("[INFO] Transcript already exists in S3, reusing", {
+          key: existingTranscript,
+        });
+        transcriptS3Key = existingTranscript;
+
+        // Fetch the existing transcript text for insights generation (if needed)
+        if (!existingInsights) {
+          transcriptText = await getTranscriptFromS3(existingTranscript);
+        }
+      } else {
+        console.log("[INFO] Fetching transcript from Transcript API", {
+          youtubeLink,
+        });
+        transcriptText = await getTranscriptFromAPI(youtubeLink);
+
+        if (!transcriptText || transcriptText.trim().length === 0) {
+          throw new Error("Transcript API returned empty transcript");
+        }
+
+        console.log("[INFO] Transcript received", {
+          transcriptLength: transcriptText.length,
+        });
+
+        // Save transcript to S3
+        const timestamp = Date.now();
+        transcriptS3Key = `transcription-${youtubeId}-${timestamp}.json`;
+
+        console.log("[INFO] Saving transcript to S3", { transcriptS3Key });
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: TRANSCRIBE_OUTPUT_BUCKET,
+            Key: transcriptS3Key,
+            Body: JSON.stringify(
+              {
+                results: {
+                  transcripts: [{ transcript: transcriptText }],
+                },
+              },
+              null,
+              2
+            ),
+            ContentType: "application/json",
+          })
+        );
       }
 
-      console.log("[INFO] Transcript received", {
-        transcriptLength: transcriptText.length,
-      });
+      // Step 2: Generate or reuse insights
+      if (existingInsights) {
+        console.log("[INFO] Insights already exist in S3, reusing", {
+          key: existingInsights,
+        });
+        insightsS3Key = existingInsights;
+      } else {
+        console.log("[INFO] Generating AI insights from transcript");
+        const aiInsights = await generateInsightsFromTranscript(transcriptText);
 
-      // Step 2: Generate AI insights from transcript
-      console.log("[INFO] Generating AI insights from transcript");
-      const aiInsights = await generateInsightsFromTranscript(transcriptText);
+        // Normalize insights
+        normalizedInsights = normalizeInsights(aiInsights);
 
-      // Step 3: Normalize insights
-      const normalizedInsights = normalizeInsights(aiInsights);
+        // Save insights to S3
+        const timestamp = Date.now();
+        insightsS3Key = `insights-${youtubeId}-${timestamp}.json`;
+        console.log("[INFO] Saving insights to S3", { insightsS3Key });
+        await s3Client.send(
+          new PutObjectCommand({
+            Bucket: TRANSCRIBE_OUTPUT_BUCKET,
+            Key: insightsS3Key,
+            Body: JSON.stringify(normalizedInsights, null, 2),
+            ContentType: "application/json",
+          })
+        );
+      }
 
-      // Step 4: Save transcript to S3
-      const timestamp = Date.now();
-      const youtubeId = extractYouTubeID(youtubeLink);
-      const transcriptS3Key = `transcription-${youtubeId}-${timestamp}.json`;
-
-      console.log("[INFO] Saving transcript to S3", { transcriptS3Key });
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: TRANSCRIBE_OUTPUT_BUCKET,
-          Key: transcriptS3Key,
-          Body: JSON.stringify(
-            {
-              results: {
-                transcripts: [{ transcript: transcriptText }],
-              },
-            },
-            null,
-            2
-          ),
-          ContentType: "application/json",
-        })
-      );
-
-      // Step 5: Save insights to S3
-      const insightsS3Key = `insights-${youtubeId}-${timestamp}.json`;
-      console.log("[INFO] Saving insights to S3", { insightsS3Key });
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: TRANSCRIBE_OUTPUT_BUCKET,
-          Key: insightsS3Key,
-          Body: JSON.stringify(normalizedInsights, null, 2),
-          ContentType: "application/json",
-        })
-      );
-
-      // Step 6: Update DynamoDB with transcript and insights S3 keys
+      // Step 3: Update DynamoDB with transcript and insights S3 keys
       console.log("[INFO] Updating DynamoDB with S3 keys");
       await dynamoClient.send(
         new UpdateItemCommand({
@@ -615,4 +653,73 @@ function extractYouTubeID(url) {
     console.error("[ERROR] Invalid URL format", { url });
   }
   return null;
+}
+
+async function findExistingS3File(prefix) {
+  try {
+    const listParams = {
+      Bucket: TRANSCRIBE_OUTPUT_BUCKET,
+      Prefix: prefix,
+      MaxKeys: 1,
+    };
+
+    const listResult = await s3Client.send(
+      new ListObjectsV2Command(listParams)
+    );
+
+    if (listResult.Contents && listResult.Contents.length > 0) {
+      return listResult.Contents[0].Key;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn("[WARN] Error checking for existing S3 file", {
+      prefix,
+      error: error.message,
+    });
+    return null;
+  }
+}
+
+async function getTranscriptFromS3(s3Key) {
+  try {
+    console.log("[INFO] Fetching existing transcript from S3", { s3Key });
+
+    const getParams = {
+      Bucket: TRANSCRIBE_OUTPUT_BUCKET,
+      Key: s3Key,
+    };
+
+    const result = await s3Client.send(new GetObjectCommand(getParams));
+    const bodyContents = await streamToString(result.Body);
+    const data = JSON.parse(bodyContents);
+
+    // Extract transcript text from the stored format
+    const transcriptText =
+      data?.results?.transcripts?.[0]?.transcript || "";
+
+    if (!transcriptText || transcriptText.trim().length === 0) {
+      throw new Error("Existing transcript is empty");
+    }
+
+    console.log("[INFO] Retrieved existing transcript from S3", {
+      transcriptLength: transcriptText.length,
+    });
+
+    return transcriptText;
+  } catch (error) {
+    console.error("[ERROR] Failed to retrieve transcript from S3", {
+      s3Key,
+      error: error.message,
+    });
+    throw new Error(`Failed to retrieve existing transcript: ${error.message}`);
+  }
+}
+
+async function streamToString(stream) {
+  const chunks = [];
+  for await (const chunk of stream) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf-8");
 }
