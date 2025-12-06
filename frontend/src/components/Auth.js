@@ -62,6 +62,10 @@ const Auth = ({ onAuthSuccess }) => {
           localStorage.setItem("access_token", data.access_token);
           localStorage.setItem("id_token", data.id_token);
           localStorage.setItem("refresh_token", data.refresh_token);
+
+          // Calculate and store expiration time (expires_in is in seconds)
+          const expiresAt = Date.now() + (data.expires_in * 1000);
+          localStorage.setItem("token_expires_at", expiresAt.toString());
         }
 
         onAuthSuccess();

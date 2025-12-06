@@ -169,3 +169,24 @@ resource "aws_lambda_function" "delete_video" {
   timeout     = 30
   memory_size = 128
 }
+
+# Refresh token Lambda
+resource "aws_lambda_function" "refresh_token" {
+  function_name = "refreshToken"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/refreshToken/refreshToken.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/refreshToken/refreshToken.zip")
+
+  environment {
+    variables = {
+      CLIENT_ID = aws_cognito_user_pool_client.safetube_user_pool_client.id
+    }
+  }
+
+  timeout     = 30
+  memory_size = 128
+}

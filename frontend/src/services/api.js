@@ -12,9 +12,67 @@ import {
 } from "../config/api";
 
 /**
+ * Check if token is expired or will expire soon (within 5 minutes)
+ */
+const isTokenExpiringSoon = () => {
+  const expiresAt = localStorage.getItem("token_expires_at");
+  if (!expiresAt) return true;
+
+  const expiryTime = parseInt(expiresAt, 10);
+  const currentTime = Date.now();
+  const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  return currentTime >= expiryTime - fiveMinutes;
+};
+
+/**
+ * Refresh access and ID tokens using refresh token
+ */
+const refreshTokens = async () => {
+  const refreshToken = localStorage.getItem("refresh_token");
+
+  if (!refreshToken) {
+    throw new Error("No refresh token available");
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`, {
+      method: HTTP_METHODS.POST,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Token refresh failed");
+    }
+
+    // Update tokens in localStorage
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("id_token", data.id_token);
+
+    // Calculate and store expiration time (expires_in is in seconds)
+    const expiresAt = Date.now() + (data.expires_in * 1000);
+    localStorage.setItem("token_expires_at", expiresAt.toString());
+
+    return data;
+  } catch (error) {
+    // If refresh fails, clear all tokens
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("id_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("token_expires_at");
+    throw error;
+  }
+};
+
+/**
  * Get authentication headers based on user session
  */
-const getAuthHeaders = () => {
+const getAuthHeaders = async () => {
   const headers = {
     "Content-Type": "application/json",
   };
@@ -27,6 +85,16 @@ const getAuthHeaders = () => {
       headers["X-Guest-ID"] = guestId;
     }
   } else {
+    // Check if token needs refresh
+    if (isTokenExpiringSoon()) {
+      try {
+        await refreshTokens();
+      } catch (error) {
+        console.error("Token refresh failed:", error);
+        // Let the request proceed with expired token, 401 handler will catch it
+      }
+    }
+
     const idToken = localStorage.getItem("id_token");
     if (idToken) {
       headers["Authorization"] = `Bearer ${idToken}`;
@@ -44,10 +112,12 @@ const apiRequest = async (endpoint, options = {}) => {
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
   try {
+    const authHeaders = await getAuthHeaders();
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
-        ...getAuthHeaders(),
+        ...authHeaders,
         ...options.headers,
       },
       signal: controller.signal,
@@ -64,6 +134,7 @@ const apiRequest = async (endpoint, options = {}) => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("id_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("token_expires_at");
         localStorage.removeItem("is_guest");
         localStorage.removeItem("guest_id");
         throw new Error(ERROR_MESSAGES.UNAUTHORIZED);
@@ -196,6 +267,7 @@ export const logout = () => {
   localStorage.removeItem("access_token");
   localStorage.removeItem("id_token");
   localStorage.removeItem("refresh_token");
+  localStorage.removeItem("token_expires_at");
   localStorage.removeItem("is_guest");
   localStorage.removeItem("guest_id");
 };

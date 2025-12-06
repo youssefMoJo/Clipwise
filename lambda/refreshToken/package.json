@@ -1,0 +1,10 @@
+{
+  "name": "refresh-token",
+  "version": "1.0.0",
+  "description": "Lambda function to refresh Cognito tokens",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.616.0"
+  }
+}

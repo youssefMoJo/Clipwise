@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   // Authentication
   SIGN_UP: "/signup",
   LOG_IN: "/login",
+  REFRESH_TOKEN: "/refresh",
 
   // Video Operations
   PROCESS_VIDEO: "/process",
