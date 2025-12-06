@@ -64,6 +64,8 @@ export const AddVideoContainer = styled.div`
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  margin-top: -70px;
+  padding-top: calc(2rem + 70px);
   box-sizing: border-box;
   position: relative;
   overflow: hidden;

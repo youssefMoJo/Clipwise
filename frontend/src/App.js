@@ -1,89 +1,107 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import "./App.css";
 import Onboarding from "./components/Onboarding";
 import Auth from "./components/Auth";
 import AddVideo from "./components/AddVideo";
+import MyVideos from "./components/MyVideos";
+import Profile from "./components/Profile";
+import Layout from "./components/Layout";
 
-function App() {
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showAddVideo, setShowAddVideo] = useState(true);
-  const [videoInsights, setVideoInsights] = useState(null);
+function OnboardingRoute() {
+  const navigate = useNavigate();
 
   const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
     localStorage.setItem("onboardingCompleted", "true");
+    navigate("/auth");
   };
+
+  return <Onboarding onComplete={handleOnboardingComplete} />;
+}
+
+function AuthRoute() {
+  const navigate = useNavigate();
 
   const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
+    navigate("/my-videos");
   };
 
-  const handleVideoSubmit = (insights) => {
-    setVideoInsights(insights);
-    setShowAddVideo(false);
-  };
+  return <Auth onAuthSuccess={handleAuthSuccess} />;
+}
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("id_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("guest_id");
-    localStorage.removeItem("is_guest");
-  };
-
-  React.useEffect(() => {
-    const completed = localStorage.getItem("onboardingCompleted");
-    const accessToken = localStorage.getItem("access_token");
-    const isGuest = localStorage.getItem("is_guest");
-
-    if (completed === "true") {
-      setShowOnboarding(false);
-    }
-
-    if (accessToken || isGuest === "true") {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
-  if (showOnboarding) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
-  }
+function ProtectedRoute({ children }) {
+  const isAuthenticated =
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("is_guest") === "true";
 
   if (!isAuthenticated) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
+    return <Navigate to="/auth" replace />;
   }
 
-  if (showAddVideo) {
-    return <AddVideo onVideoSubmit={handleVideoSubmit} />;
-  }
+  return children;
+}
 
-  const isGuest = localStorage.getItem("is_guest") === "true";
+function App() {
+  const onboardingCompleted = localStorage.getItem("onboardingCompleted") === "true";
+  const isAuthenticated =
+    localStorage.getItem("access_token") ||
+    localStorage.getItem("is_guest") === "true";
 
   return (
-    <div className="App">
-      <h1>Welcome to ClipWise</h1>
-      <p>Your AI-powered video insights platform</p>
-      {isGuest && (
-        <p style={{ color: "#667eea", fontWeight: "600" }}>
-          Welcome, guest! Sign up anytime to keep your insights safe.
-        </p>
-      )}
-      {videoInsights && (
-        <div>
-          <h2>Video Insights</h2>
-          <pre>{JSON.stringify(videoInsights, null, 2)}</pre>
-        </div>
-      )}
-      <button onClick={() => setShowAddVideo(true)}>Add Another Video</button>
-      <button onClick={() => setShowOnboarding(true)}>
-        View Onboarding Again
-      </button>
-      <button onClick={handleLogout}>
-        {isGuest ? "Exit Guest Mode" : "Log Out"}
-      </button>
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            !onboardingCompleted ? (
+              <Navigate to="/onboarding" replace />
+            ) : !isAuthenticated ? (
+              <Navigate to="/auth" replace />
+            ) : (
+              <Navigate to="/my-videos" replace />
+            )
+          }
+        />
+
+        <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route path="/auth" element={<AuthRoute />} />
+
+        <Route
+          path="/add-video"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AddVideo />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/my-videos"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MyVideos />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }
 
