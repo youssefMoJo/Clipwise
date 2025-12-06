@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import loadingAnimation from "../Assets/lottie Files/loading2.json";
+import { processVideo } from "../services/api";
 import {
   AddVideoContainer,
   AddVideoCard,
@@ -22,6 +24,7 @@ import {
 } from "./AddVideo.styled";
 
 const AddVideo = ({ onVideoSubmit }) => {
+  const navigate = useNavigate();
   const quotes = [
     "Great things take time. Hang tight!",
     "Your insights are on the way...",
@@ -94,54 +97,26 @@ const AddVideo = ({ onVideoSubmit }) => {
 
     setIsLoading(true);
 
-    // For testing: Show loading for 3 seconds
-    setTimeout(() => {
-      setIsLoading(false);
-      setError("Test mode: API call would happen here");
-    }, 30000);
-
-    /* Actual API call - uncomment when ready to use
     try {
-      const isGuest = localStorage.getItem("is_guest") === "true";
-      const guestId = localStorage.getItem("guest_id");
-      const accessToken = localStorage.getItem("access_token");
+      const data = await processVideo(videoUrl);
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      if (isGuest) {
-        headers["X-Guest-ID"] = guestId;
-      } else {
-        headers["Authorization"] = `Bearer ${accessToken}`;
-      }
-
-      const response = await fetch(
-        "https://naa65qzwpl.execute-api.us-east-1.amazonaws.com/prod/process-video",
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify({ video_url: videoUrl }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to process video");
-      }
-
+      // Call parent callback if provided
       if (onVideoSubmit) {
         onVideoSubmit(data);
       }
 
+      // Clear input
       setVideoUrl("");
+
+      // Navigate to my videos page after successful submission
+      // The video will be processing in the background
+      setTimeout(() => {
+        navigate("/my-videos");
+      }, 2000);
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
-    } finally {
+      setError(err.message || "Failed to process video. Please try again.");
       setIsLoading(false);
     }
-    */
   };
 
   const handleKeyPress = (e) => {

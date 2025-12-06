@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { signUp, logIn } from "../services/api";
 import {
   AuthContainer,
   AuthCard,
@@ -26,8 +27,6 @@ const Auth = ({ onAuthSuccess }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = process.env.REACT_APP_API_URL || "YOUR_API_GATEWAY_URL";
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -47,35 +46,24 @@ const Auth = ({ onAuthSuccess }) => {
     }
 
     try {
-      const endpoint = isSignUp ? "/signup" : "/login";
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Authentication failed");
-      }
-
-      // Store tokens if login
-      if (!isSignUp && data.access_token) {
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("id_token", data.id_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-      }
-
-      // If sign up, automatically switch to login
       if (isSignUp) {
+        // Sign up
+        await signUp(email, password);
         setError("");
         setIsSignUp(false);
         setPassword("");
         alert("Account created! Please log in.");
       } else {
+        // Log in
+        const data = await logIn(email, password);
+
+        // Store tokens
+        if (data.access_token) {
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("id_token", data.id_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+        }
+
         onAuthSuccess();
       }
     } catch (err) {

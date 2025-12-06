@@ -1,61 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { getVideos } from "../services/api";
 import VideoCard from "./VideoCard";
 
 const MyVideos = () => {
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // TODO: Replace with actual API call to fetch user's videos
     const fetchVideos = async () => {
       try {
-        // const response = await fetch('/api/videos');
-        // const data = await response.json();
-        // setVideos(data);
+        setLoading(true);
+        const data = await getVideos();
 
-        // Mock data for now - adding sample videos to showcase the cards
-        setTimeout(() => {
-          setVideos([
-            {
-              id: 1,
-              title: "Introduction to React Hooks",
-              thumbnail: null,
-              duration: 245,
-              status: "ready",
-              createdAt: new Date().toISOString(),
-            },
-            {
-              id: 2,
-              title: "Building a Full-Stack Application with Node.js and React",
-              thumbnail: null,
-              duration: 1825,
-              status: "processing",
-              createdAt: new Date().toISOString(),
-            },
-            {
-              id: 3,
-              title: "CSS Grid Layout Tutorial",
-              thumbnail: null,
-              duration: 680,
-              status: "ready",
-              createdAt: new Date().toISOString(),
-            },
-            {
-              id: 4,
-              title: "JavaScript ES6 Features",
-              thumbnail: null,
-              duration: 420,
-              status: "failed",
-              createdAt: new Date().toISOString(),
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
+        // The API returns videos in a specific format
+        // Adjust based on your backend response structure
+        setVideos(data.videos || data || []);
+        setError("");
       } catch (error) {
         console.error("Error fetching videos:", error);
+        setError(error.message || "Failed to load videos");
+        setVideos([]);
+      } finally {
         setLoading(false);
       }
     };
@@ -73,6 +42,23 @@ const MyVideos = () => {
     return (
       <Container>
         <LoadingText>Loading your videos...</LoadingText>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Content>
+          <ErrorContainer>
+            <ErrorIcon>⚠️</ErrorIcon>
+            <ErrorTitle>Failed to Load Videos</ErrorTitle>
+            <ErrorMessage>{error}</ErrorMessage>
+            <RetryButton onClick={() => window.location.reload()}>
+              Retry
+            </RetryButton>
+          </ErrorContainer>
+        </Content>
       </Container>
     );
   }
@@ -239,6 +225,61 @@ const VideoGrid = styled.div`
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 4rem 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 2px solid rgba(255, 100, 100, 0.3);
+`;
+
+const ErrorIcon = styled.div`
+  font-size: 5rem;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+`;
+
+const ErrorTitle = styled.h2`
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const ErrorMessage = styled.p`
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+`;
+
+const RetryButton = styled.button`
+  background: white;
+  color: #764ba2;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 `;
 
