@@ -34,7 +34,7 @@ const MyVideos = () => {
 
   const handleVideoClick = (video) => {
     if (video.status === "ready") {
-      navigate(`/video-insights/${video.id}`);
+      navigate(`/video-insights/${video.video_id}`);
     }
   };
 
