@@ -6,6 +6,7 @@ import Auth from "./components/Auth";
 import AddVideo from "./components/AddVideo";
 import MyVideos from "./components/MyVideos";
 import Profile from "./components/Profile";
+import VideoInsights from "./components/VideoInsights";
 import Layout from "./components/Layout";
 
 function OnboardingRoute() {
@@ -94,6 +95,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Profile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/video-insights/:videoId"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <VideoInsights />
               </Layout>
             </ProtectedRoute>
           }

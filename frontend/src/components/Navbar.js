@@ -12,12 +12,16 @@ import {
   DropdownItem,
   GuestBadge,
   UserInfo,
+  HamburgerButton,
+  MobileMenu,
+  MobileNavLink,
 } from "./Navbar.styled";
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
   const userName = localStorage.getItem("user_name") || "User";
 
@@ -32,6 +36,16 @@ function Navbar() {
   };
 
   const isActive = (path) => location.pathname === path;
+
+  const handleNavClick = (path) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const handleMobileLogout = () => {
+    setMobileMenuOpen(false);
+    handleLogout();
+  };
 
   return (
     <NavbarContainer>
@@ -76,7 +90,36 @@ function Navbar() {
             </UserDropdown>
           )}
         </UserSection>
+
+        <HamburgerButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </HamburgerButton>
       </NavContent>
+
+      {mobileMenuOpen && (
+        <MobileMenu>
+          <MobileNavLink
+            onClick={() => handleNavClick("/my-videos")}
+            $isActive={isActive("/my-videos")}
+          >
+            📚 My Videos
+          </MobileNavLink>
+          <MobileNavLink
+            onClick={() => handleNavClick("/add-video")}
+            $isActive={isActive("/add-video")}
+          >
+            ➕ Add Video
+          </MobileNavLink>
+          <MobileNavLink onClick={() => handleNavClick("/profile")}>
+            ⚙️ Profile
+          </MobileNavLink>
+          <MobileNavLink onClick={handleMobileLogout} $danger>
+            🚪 {isGuest ? "Exit Guest Mode" : "Logout"}
+          </MobileNavLink>
+        </MobileMenu>
+      )}
     </NavbarContainer>
   );
 }

@@ -21,7 +21,7 @@ export const NavContent = styled.div`
   gap: 2rem;
 
   @media (max-width: 768px) {
-    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
     gap: 1rem;
   }
 `;
@@ -52,10 +52,7 @@ export const NavLinks = styled.div`
   justify-content: center;
 
   @media (max-width: 768px) {
-    width: 100%;
-    order: 3;
-    justify-content: flex-start;
-    gap: 1rem;
+    display: none;
   }
 `;
 
@@ -126,6 +123,10 @@ export const UserSection = styled.div`
   position: relative;
   display: flex;
   align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 export const UserButton = styled.button`
@@ -233,5 +234,121 @@ export const DropdownItem = styled.button`
 
   &:not(:last-child) {
     border-bottom: 1px solid #f0f0f0;
+  }
+`;
+
+export const HamburgerButton = styled.button`
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  span {
+    width: 2rem;
+    height: 0.25rem;
+    background: white;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+    transform-origin: 1px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+    &:first-child {
+      transform: rotate(0);
+    }
+
+    &:nth-child(2) {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    &:nth-child(3) {
+      transform: rotate(0);
+    }
+  }
+
+  &:hover span {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.4);
+  }
+`;
+
+export const MobileMenu = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(
+      180deg,
+      rgba(102, 126, 234, 0.95) 0%,
+      rgba(118, 75, 162, 0.95) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    gap: 0.75rem;
+    animation: slideDown 0.3s ease;
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+`;
+
+export const MobileNavLink = styled.button`
+  background: ${(props) =>
+    props.$isActive
+      ? "rgba(255, 255, 255, 0.25)"
+      : "rgba(255, 255, 255, 0.1)"};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid
+    ${(props) =>
+      props.$isActive
+        ? "rgba(255, 255, 255, 0.5)"
+        : "rgba(255, 255, 255, 0.2)"};
+  color: ${(props) => (props.$danger ? "#ffebee" : "white")};
+  font-size: 1rem;
+  font-weight: ${(props) => (props.$isActive ? "700" : "600")};
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  text-align: left;
+  box-shadow: ${(props) =>
+    props.$isActive
+      ? "0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)"
+      : "0 2px 8px rgba(0, 0, 0, 0.1)"};
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateX(5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  &:active {
+    transform: translateX(3px);
   }
 `;

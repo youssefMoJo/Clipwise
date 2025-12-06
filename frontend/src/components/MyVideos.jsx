@@ -65,8 +65,7 @@ const MyVideos = () => {
 
   const handleVideoClick = (video) => {
     if (video.status === "ready") {
-      // TODO: Navigate to video insights page
-      console.log("View insights for:", video.title);
+      navigate(`/video-insights/${video.id}`);
     }
   };
 
