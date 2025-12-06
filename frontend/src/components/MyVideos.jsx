@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { getVideos } from "../services/api";
+import { getVideos, deleteVideo } from "../services/api";
 import VideoCard from "./VideoCard";
+import DeleteConfirmModal from "./DeleteConfirmModal";
+import Toast from "./Toast";
 
 const MyVideos = () => {
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [videoToDelete, setVideoToDelete] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -36,6 +40,40 @@ const MyVideos = () => {
     if (video.status === "ready") {
       navigate(`/video-insights/${video.video_id}`);
     }
+  };
+
+  const handleDeleteClick = (video) => {
+    setVideoToDelete(video);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!videoToDelete) return;
+
+    try {
+      await deleteVideo(videoToDelete.video_id);
+
+      // Remove from UI with animation
+      setVideos((prevVideos) =>
+        prevVideos.filter((v) => v.video_id !== videoToDelete.video_id)
+      );
+
+      setToast({
+        type: "success",
+        message: `"${videoToDelete.title}" has been deleted successfully`,
+      });
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      setToast({
+        type: "error",
+        message: error.message || "Failed to delete video",
+      });
+    } finally {
+      setVideoToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setVideoToDelete(null);
   };
 
   if (loading) {
@@ -90,11 +128,27 @@ const MyVideos = () => {
                 key={video.id}
                 video={video}
                 onClick={handleVideoClick}
+                onDelete={handleDeleteClick}
               />
             ))}
           </VideoGrid>
         )}
       </Content>
+
+      <DeleteConfirmModal
+        isOpen={!!videoToDelete}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        videoTitle={videoToDelete?.title || ""}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </Container>
   );
 };

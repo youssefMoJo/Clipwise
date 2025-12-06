@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   Thumbnail,
@@ -8,10 +8,13 @@ import {
   MetaInfo,
   Duration,
   StatusBadge,
-  ActionButton,
+  CardActions,
+  DeleteButton,
+  ViewButton,
 } from "./VideoCard.styled";
 
-function VideoCard({ video, onClick }) {
+function VideoCard({ video, onClick, onDelete }) {
+  const [isDeleting, setIsDeleting] = useState(false);
   const getStatusInfo = (status) => {
     switch (status) {
       case "ready":
@@ -32,10 +35,22 @@ function VideoCard({ video, onClick }) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await onDelete(video);
+    } catch (error) {
+      setIsDeleting(false);
+    }
+  };
+
   const statusInfo = getStatusInfo(video.status);
 
   return (
-    <Card onClick={() => onClick && onClick(video)}>
+    <Card>
       {video.picture ? (
         <Thumbnail src={video.picture} alt={video.title} />
       ) : (
@@ -53,14 +68,33 @@ function VideoCard({ video, onClick }) {
           </StatusBadge>
         </MetaInfo>
         {video.status === "ready" && (
-          <ActionButton
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick && onClick(video);
-            }}
+          <CardActions>
+            <ViewButton
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick && onClick(video);
+              }}
+            >
+              View Insights →
+            </ViewButton>
+            <DeleteButton
+              $isDeleting={isDeleting}
+              onClick={handleDelete}
+              title="Delete video"
+            >
+              {isDeleting ? "⏳" : "🗑️"}
+            </DeleteButton>
+          </CardActions>
+        )}
+        {video.status !== "ready" && (
+          <DeleteButton
+            $isDeleting={isDeleting}
+            onClick={handleDelete}
+            title="Delete video"
+            style={{ marginTop: "0.75rem", width: "100%" }}
           >
-            View Insights →
-          </ActionButton>
+            {isDeleting ? "⏳ Deleting..." : "🗑️ Delete"}
+          </DeleteButton>
         )}
       </Content>
     </Card>

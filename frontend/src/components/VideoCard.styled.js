@@ -97,3 +97,63 @@ export const ActionButton = styled.button`
     transform: translateY(0);
   }
 `;
+
+export const CardActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+`;
+
+export const DeleteButton = styled.button`
+  background: ${(props) => (props.$isDeleting ? "#ccc" : "#ff4757")};
+  color: white;
+  border: none;
+  padding: 0.65rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: ${(props) => (props.$isDeleting ? "not-allowed" : "pointer")};
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: ${(props) => (props.$isDeleting ? 0.6 : 1)};
+
+  &:hover {
+    background: ${(props) => (props.$isDeleting ? "#ccc" : "#ee5a6f")};
+    transform: ${(props) => (props.$isDeleting ? "none" : "translateY(-2px)")};
+    box-shadow: ${(props) =>
+      props.$isDeleting ? "none" : "0 4px 12px rgba(255, 71, 87, 0.4)"};
+  }
+
+  &:active {
+    transform: ${(props) => (props.$isDeleting ? "none" : "translateY(0)")};
+  }
+`;
+
+export const ViewButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
