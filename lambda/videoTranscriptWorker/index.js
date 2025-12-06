@@ -147,7 +147,7 @@ export const handler = async (event) => {
       await addVideoToUser(uploadedBy, videoId);
 
       // Step 8: Mark video as completed
-      await updateVideoStatus(videoId, "done", null, retryCount);
+      await updateVideoStatus(videoId, "ready", null, retryCount);
 
       console.log("[SUCCESS] Video processing completed", { videoId });
     } catch (error) {
@@ -190,12 +190,7 @@ export const handler = async (event) => {
           videoId,
         });
 
-        await updateVideoStatus(
-          videoId,
-          "failed_permanent",
-          error.message,
-          retryCount
-        );
+        await updateVideoStatus(videoId, "failed", error.message, retryCount);
 
         // Send to DLQ
         try {
