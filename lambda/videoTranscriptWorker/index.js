@@ -71,6 +71,9 @@ export const handler = async (event) => {
         );
       }
 
+      // Step: Add video to user's videos array immediately after validation
+      await addVideoToUser(uploadedBy, videoId);
+
       // Update status to processing
       await updateVideoStatus(videoId, "processing", null, retryCount);
 
@@ -81,7 +84,9 @@ export const handler = async (event) => {
       const existingTranscript = await findExistingS3File(
         `transcription-${youtubeId}`
       );
-      const existingInsights = await findExistingS3File(`insights-${youtubeId}`);
+      const existingInsights = await findExistingS3File(
+        `insights-${youtubeId}`
+      );
 
       let transcriptText;
       let transcriptS3Key;
@@ -179,10 +184,6 @@ export const handler = async (event) => {
           },
         })
       );
-
-      // Step 7: Add video to user's videos array
-      console.log("[INFO] Adding video to user's array", { uploadedBy });
-      await addVideoToUser(uploadedBy, videoId);
 
       // Step 8: Mark video as completed
       await updateVideoStatus(videoId, "ready", null, retryCount);
@@ -695,8 +696,7 @@ async function getTranscriptFromS3(s3Key) {
     const data = JSON.parse(bodyContents);
 
     // Extract transcript text from the stored format
-    const transcriptText =
-      data?.results?.transcripts?.[0]?.transcript || "";
+    const transcriptText = data?.results?.transcripts?.[0]?.transcript || "";
 
     if (!transcriptText || transcriptText.trim().length === 0) {
       throw new Error("Existing transcript is empty");
