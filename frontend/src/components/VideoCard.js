@@ -36,8 +36,8 @@ function VideoCard({ video, onClick }) {
 
   return (
     <Card onClick={() => onClick && onClick(video)}>
-      {video.thumbnail ? (
-        <Thumbnail src={video.thumbnail} alt={video.title} />
+      {video.picture ? (
+        <Thumbnail src={video.picture} alt={video.title} />
       ) : (
         <ThumbnailPlaceholder>
           <span>🎬</span>
@@ -53,10 +53,12 @@ function VideoCard({ video, onClick }) {
           </StatusBadge>
         </MetaInfo>
         {video.status === "ready" && (
-          <ActionButton onClick={(e) => {
-            e.stopPropagation();
-            onClick && onClick(video);
-          }}>
+          <ActionButton
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick && onClick(video);
+            }}
+          >
             View Insights →
           </ActionButton>
         )}
