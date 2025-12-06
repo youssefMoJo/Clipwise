@@ -72,7 +72,6 @@ const MyVideos = () => {
             {videos.length} {videos.length === 1 ? "video" : "videos"}
           </VideoCount>
         </Header>
-
         {videos.length === 0 ? (
           <EmptyState>
             <EmptyIcon>🎬</EmptyIcon>
@@ -81,7 +80,7 @@ const MyVideos = () => {
               Start creating engaging clips by uploading your first video!
             </EmptyMessage>
             <CTAButton onClick={() => navigate("/add-video")}>
-              Upload Your First Video
+              Add Your First Video
             </CTAButton>
           </EmptyState>
         ) : (
