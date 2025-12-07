@@ -42,7 +42,7 @@ function VideoCard({ video, onClick, onDelete }) {
     setIsDeleting(true);
     try {
       await onDelete(video);
-    } catch (error) {
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -58,7 +58,7 @@ function VideoCard({ video, onClick, onDelete }) {
           <span>🎬</span>
         </ThumbnailPlaceholder>
       )}
-
+      {console.log(video)}
       <Content>
         <Title>{video.title}</Title>
         <MetaInfo>

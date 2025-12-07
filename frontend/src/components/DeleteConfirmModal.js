@@ -1,11 +1,11 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
-const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle }) => {
+const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle, isDeleting }) => {
   if (!isOpen) return null;
 
   return (
-    <ModalOverlay onClick={onCancel}>
+    <ModalOverlay onClick={isDeleting ? undefined : onCancel}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <IconContainer>
           <WarningIcon>⚠️</WarningIcon>
@@ -13,11 +13,20 @@ const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle }) => {
         <ModalTitle>Delete Video?</ModalTitle>
         <ModalMessage>
           Are you sure you want to delete{" "}
-          <VideoTitle>"{videoTitle}"</VideoTitle>? This action cannot be undone.
+          <VideoTitle>"{videoTitle}" ? </VideoTitle>This action cannot be
+          undone.
         </ModalMessage>
         <ButtonGroup>
-          <CancelButton onClick={onCancel}>Cancel</CancelButton>
-          <DeleteButton onClick={onConfirm}>Delete</DeleteButton>
+          <CancelButton onClick={onCancel} disabled={isDeleting}>Cancel</CancelButton>
+          <DeleteButton onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? (
+              <>
+                <Spinner /> Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
+          </DeleteButton>
         </ButtonGroup>
       </ModalContent>
     </ModalOverlay>
@@ -50,6 +59,15 @@ const pulse = keyframes`
   }
   50% {
     transform: scale(1.1);
+  }
+`;
+
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 `;
 
@@ -140,13 +158,18 @@ const CancelButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #e0e0e0;
     transform: translateY(-2px);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -162,16 +185,34 @@ const DeleteButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: linear-gradient(135deg, #ee5a6f 0%, #ff7b8f 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
   }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+`;
+
+const Spinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: ${spin} 0.8s linear infinite;
 `;
 
 export default DeleteConfirmModal;

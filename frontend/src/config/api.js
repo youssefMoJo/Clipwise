@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
   PROCESS_VIDEO: "/process",
   GET_VIDEOS: "/videos",
   GET_VIDEO_DETAILS: "/videos",
-  DELETE_VIDEO: "/video",
+  DELETE_VIDEO: "/videos",
 
   // User Operations
   GET_USER_PROFILE: "/profile",

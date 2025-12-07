@@ -12,6 +12,7 @@ const MyVideos = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [videoToDelete, setVideoToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const MyVideos = () => {
   const handleDeleteConfirm = async () => {
     if (!videoToDelete) return;
 
+    setIsDeleting(true);
     try {
       await deleteVideo(videoToDelete.video_id);
 
@@ -68,6 +70,7 @@ const MyVideos = () => {
         message: error.message || "Failed to delete video",
       });
     } finally {
+      setIsDeleting(false);
       setVideoToDelete(null);
     }
   };
@@ -140,6 +143,7 @@ const MyVideos = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         videoTitle={videoToDelete?.title || ""}
+        isDeleting={isDeleting}
       />
 
       {toast && (
