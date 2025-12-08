@@ -59,7 +59,6 @@ export const InfoRow = styled.div`
 export const Label = styled.span`
   font-weight: 600;
   color: #666;
-  min-width: 100px;
 `;
 
 export const Value = styled.span`
