@@ -84,9 +84,9 @@ function Navbar() {
 
           {showDropdown && (
             <UserDropdown>
-              <DropdownItem onClick={() => navigate("/profile")}>
+              {/* <DropdownItem onClick={() => navigate("/profile")}>
                 ⚙️ Profile
-              </DropdownItem>
+              </DropdownItem> */}
               <DropdownItem onClick={handleLogout} $danger>
                 🚪 {isGuest ? "Exit Guest Mode" : "Logout"}
               </DropdownItem>

@@ -88,82 +88,82 @@ function Profile() {
           <SectionTitle>Account Information</SectionTitle>
           <InfoRow>
             <Label>Name:</Label>
-            <Value>{userName}</Value>
-            {isGuest && <Badge>Guest</Badge>}
+            {isGuest ? "Guest" : <Value>{userName}</Value>}
           </InfoRow>
           <InfoRow>
             <Label>Email:</Label>
             <Value>{isGuest ? "Not available (Guest)" : userEmail}</Value>
           </InfoRow>
-          {isGuest && guestId && (
-            <InfoRow>
-              <Label>Guest ID:</Label>
-              <Value>{guestId.substring(0, 12)}...</Value>
-            </InfoRow>
-          )}
         </Section>
+        {/* {!isGuest ? (
+          <Section>
+            <SectionTitle>Send Feedback</SectionTitle>
+            <Form onSubmit={handleFeedbackSubmit}>
+              <TextArea
+                placeholder="Share your thoughts, suggestions, or report issues..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={6}
+              />
+              <Button type="submit" disabled={feedbackSubmitted}>
+                {feedbackSubmitted ? "✓ Feedback Sent!" : "Submit Feedback"}
+              </Button>
+            </Form>
+          </Section>
+        ) : (
+          ""
+        )} */}
 
-        <Section>
-          <SectionTitle>Send Feedback</SectionTitle>
-          <Form onSubmit={handleFeedbackSubmit}>
-            <TextArea
-              placeholder="Share your thoughts, suggestions, or report issues..."
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              rows={6}
-            />
-            <Button type="submit" disabled={feedbackSubmitted}>
-              {feedbackSubmitted ? "✓ Feedback Sent!" : "Submit Feedback"}
-            </Button>
-          </Form>
-        </Section>
-
-        <Section>
+        {/* <Section>
           <SectionTitle>Account Actions</SectionTitle>
           <Button onClick={handleLogout}>
             {isGuest ? "Exit Guest Mode" : "Logout"}
           </Button>
-        </Section>
+        </Section> */}
 
-        <DeleteSection>
-          <SectionTitle>Danger Zone</SectionTitle>
-          <WarningText>
-            {isGuest
-              ? "Delete your guest session and all associated data. This action cannot be undone."
-              : "Permanently delete your account and all associated data. This action cannot be undone."}
-          </WarningText>
+        {/* {!isGuest ? (
+          <DeleteSection>
+            <SectionTitle>Danger Zone</SectionTitle>
+            <WarningText>
+              {isGuest
+                ? "Delete your guest session and all associated data. This action cannot be undone."
+                : "Permanently delete your account and all associated data. This action cannot be undone."}
+            </WarningText>
 
-          {!showDeleteConfirm ? (
-            <DangerButton onClick={() => setShowDeleteConfirm(true)}>
-              Delete {isGuest ? "Session" : "Account"}
-            </DangerButton>
-          ) : (
-            <ConfirmBox>
-              <p>
-                Type <strong>DELETE</strong> to confirm:
-              </p>
-              <input
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="DELETE"
-              />
-              <ActionButtons>
-                <DangerButton onClick={handleDeleteAccount}>
-                  Confirm Delete
-                </DangerButton>
-                <Button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setDeleteConfirmText("");
-                  }}
-                >
-                  Cancel
-                </Button>
-              </ActionButtons>
-            </ConfirmBox>
-          )}
-        </DeleteSection>
+            {!showDeleteConfirm ? (
+              <DangerButton onClick={() => setShowDeleteConfirm(true)}>
+                Delete {isGuest ? "Session" : "Account"}
+              </DangerButton>
+            ) : (
+              <ConfirmBox>
+                <p>
+                  Type <strong>DELETE</strong> to confirm:
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                />
+                <ActionButtons>
+                  <DangerButton onClick={handleDeleteAccount}>
+                    Confirm Delete
+                  </DangerButton>
+                  <Button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </ActionButtons>
+              </ConfirmBox>
+            )}
+          </DeleteSection>
+        ) : (
+          ""
+        )} */}
       </ProfileCard>
     </ProfileContainer>
   );
