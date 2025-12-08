@@ -50,7 +50,10 @@ function Navbar() {
   return (
     <NavbarContainer>
       <NavContent>
-        <Logo onClick={() => navigate("/my-videos")}>ClipWise</Logo>
+        <Logo onClick={() => navigate("/my-videos")}>
+          <img src="/Logo1Obj.png" alt="ClipWise Logo" />
+          ClipWise
+        </Logo>
 
         <NavLinks>
           <NavLink

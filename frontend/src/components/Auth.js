@@ -64,7 +64,7 @@ const Auth = ({ onAuthSuccess }) => {
           localStorage.setItem("refresh_token", data.refresh_token);
 
           // Calculate and store expiration time (expires_in is in seconds)
-          const expiresAt = Date.now() + (data.expires_in * 1000);
+          const expiresAt = Date.now() + data.expires_in * 1000;
           localStorage.setItem("token_expires_at", expiresAt.toString());
 
           // Store user email and username
@@ -108,7 +108,7 @@ const Auth = ({ onAuthSuccess }) => {
     <AuthContainer>
       <AuthCard>
         <AuthHeader>
-          <AuthLogo src="/Logo.png" alt="ClipWise Logo" />
+          <AuthLogo src="/Logo1.png" alt="ClipWise Logo" />
           <AuthSubtitle>Your AI-powered video insights platform</AuthSubtitle>
         </AuthHeader>
 

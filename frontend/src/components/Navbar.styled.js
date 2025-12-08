@@ -27,6 +27,9 @@ export const NavContent = styled.div`
 `;
 
 export const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.5rem;
   font-weight: 700;
   background: linear-gradient(135deg, #fff 0%, #f0f0ff 100%);
@@ -39,9 +42,21 @@ export const Logo = styled.div`
   transition: all 0.3s ease;
   filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.3));
 
+  img {
+    height: 2.5rem;
+    width: auto;
+    filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.3));
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+  }
+
   &:hover {
     transform: scale(1.08) rotate(-2deg);
     filter: drop-shadow(0 4px 20px rgba(255, 255, 255, 0.6));
+
+    img {
+      filter: drop-shadow(0 4px 20px rgba(255, 255, 255, 0.6));
+    }
   }
 `;
 
@@ -317,9 +332,7 @@ export const MobileMenu = styled.div`
 
 export const MobileNavLink = styled.button`
   background: ${(props) =>
-    props.$isActive
-      ? "rgba(255, 255, 255, 0.25)"
-      : "rgba(255, 255, 255, 0.1)"};
+    props.$isActive ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.1)"};
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 2px solid

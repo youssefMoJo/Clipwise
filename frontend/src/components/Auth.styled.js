@@ -91,7 +91,7 @@ export const AuthHeader = styled.div`
 `;
 
 export const AuthLogo = styled.img`
-  width: 150px;
+  width: 100px;
   height: auto;
   margin: 0 auto 0.5rem;
   display: block;
