@@ -50,9 +50,28 @@ const Auth = ({ onAuthSuccess }) => {
         // Sign up
         await signUp(email, password);
         setError("");
-        setIsSignUp(false);
-        setPassword("");
-        alert("Account created! Please log in.");
+
+        // Automatically log in after successful sign up
+        const data = await logIn(email, password);
+
+        // Store tokens
+        if (data.access_token) {
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("id_token", data.id_token);
+          localStorage.setItem("refresh_token", data.refresh_token);
+
+          // Calculate and store expiration time (expires_in is in seconds)
+          const expiresAt = Date.now() + data.expires_in * 1000;
+          localStorage.setItem("token_expires_at", expiresAt.toString());
+
+          // Store user email and username
+          localStorage.setItem("user_email", email);
+          const username = email.split("@")[0];
+          localStorage.setItem("user_name", username);
+          localStorage.setItem("is_guest", "false");
+        }
+
+        onAuthSuccess();
       } else {
         // Log in
         const data = await logIn(email, password);
