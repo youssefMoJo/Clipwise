@@ -12,6 +12,7 @@
     "@aws-sdk/client-s3": "^3.699.0",
     "@aws-sdk/client-sqs": "^3.699.0",
     "@supadata/js": "^1.0.0",
-    "axios": "^1.7.9"
+    "axios": "^1.7.9",
+    "openai": "^4.77.3"
   }
 }

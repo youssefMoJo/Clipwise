@@ -1,4 +1,5 @@
 import axios from "axios";
+import OpenAI from "openai";
 import { Supadata } from "@supadata/js";
 import {
   DynamoDBClient,
@@ -17,6 +18,13 @@ import {
 const dynamoClient = new DynamoDBClient({});
 const sqsClient = new SQSClient({});
 const s3Client = new S3Client({});
+
+// Initialize Zenmux OpenAI client
+const zenmuxClient = new OpenAI({
+  baseURL: "https://zenmux.ai/api/v1",
+  apiKey:
+    "sk-ai-v1-4784e2c0dc34220eb72ab63a5178e7a0c5f1f0ddddf2e8e6fe1b33052e2134d5",
+});
 
 const RAPIDAPI_KEYS = [
   process.env.RAPIDAPI_KEY_1,
@@ -394,7 +402,18 @@ async function generateInsightsFromTranscript(transcriptText) {
     },
   ];
 
-  const responseData = await callRapidApiWithFallback(messages);
+  // Try Zenmux API first, then fallback to RapidAPI
+  let responseData;
+  try {
+    console.log("[INFO] Trying Zenmux API for insights generation");
+    responseData = await callZenmuxApi(messages);
+    console.log("[INFO] Zenmux API call successful");
+  } catch (zenmuxError) {
+    console.warn("[WARN] Zenmux API failed, falling back to RapidAPI", {
+      error: zenmuxError.message,
+    });
+    // responseData = await callRapidApiWithFallback(messages);
+  }
 
   const aiOutput =
     responseData?.text ||
@@ -417,6 +436,33 @@ async function generateInsightsFromTranscript(transcriptText) {
   } catch (parseErr) {
     console.error("[ERROR] AI output not valid JSON", { output: cleaned });
     throw new Error("AI output not valid JSON");
+  }
+}
+
+async function callZenmuxApi(messages) {
+  try {
+    const completion = await zenmuxClient.chat.completions.create({
+      model: "z-ai/glm-4.6v-flash",
+      messages: messages,
+      temperature: 0.7,
+    });
+
+    // Return in a format compatible with the existing response parsing
+    return {
+      choices: [
+        {
+          message: {
+            content: completion.choices[0].message.content,
+          },
+        },
+      ],
+    };
+  } catch (error) {
+    console.error("[ERROR] Zenmux API call failed", {
+      error: error.message,
+      stack: error.stack,
+    });
+    throw error;
   }
 }
 
