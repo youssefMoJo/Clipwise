@@ -66,6 +66,12 @@ const Auth = ({ onAuthSuccess }) => {
           // Calculate and store expiration time (expires_in is in seconds)
           const expiresAt = Date.now() + (data.expires_in * 1000);
           localStorage.setItem("token_expires_at", expiresAt.toString());
+
+          // Store user email and username
+          localStorage.setItem("user_email", email);
+          const username = email.split("@")[0];
+          localStorage.setItem("user_name", username);
+          localStorage.setItem("is_guest", "false");
         }
 
         onAuthSuccess();

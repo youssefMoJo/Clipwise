@@ -28,7 +28,11 @@ function Profile() {
 
   const isGuest = localStorage.getItem("is_guest") === "true";
   const userEmail = localStorage.getItem("user_email") || "N/A";
-  const userName = localStorage.getItem("user_name") || "Guest User";
+  // Extract name from email (part before @)
+  const userName =
+    userEmail !== "N/A" && userEmail.includes("@")
+      ? userEmail.split("@")[0]
+      : localStorage.getItem("user_name") || "Guest User";
   const guestId = localStorage.getItem("guest_id");
 
   const handleFeedbackSubmit = async (e) => {
