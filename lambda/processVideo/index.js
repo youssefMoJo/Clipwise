@@ -102,7 +102,7 @@ export const handler = async (event) => {
 
     // Video exists - check status and handle accordingly
     if (existing.Item) {
-      if (existing.Item.status === "done") {
+      if (existing.Item.status === "ready") {
         console.log("Video already processed:", youtube_id);
 
         // Check if video is already in user's videos array
@@ -126,7 +126,7 @@ export const handler = async (event) => {
             body: JSON.stringify({
               message: "Video already in your library",
               video_id: youtube_id,
-              status: "done",
+              status: "ready",
             }),
           };
         }
@@ -159,7 +159,7 @@ export const handler = async (event) => {
             message:
               "Video added to your library (previously processed - no re-processing needed)",
             video_id: youtube_id,
-            status: "done",
+            status: "ready",
           }),
         };
       } else if (
