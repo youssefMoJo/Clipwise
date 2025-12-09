@@ -9,6 +9,21 @@ resource "aws_cognito_user_pool" "safetube_user_pool" {
     require_uppercase = false
   }
 
+  # Email configuration for password reset
+  email_configuration {
+    email_sending_account = "COGNITO_DEFAULT"
+  }
+
+  # Account recovery settings
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
+
+  # Auto-verified attributes
+  auto_verified_attributes = ["email"]
 
   tags = {
     Environment = "dev"

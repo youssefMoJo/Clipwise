@@ -190,3 +190,45 @@ resource "aws_lambda_function" "refresh_token" {
   timeout     = 30
   memory_size = 128
 }
+
+# Forgot password Lambda
+resource "aws_lambda_function" "forgot_password" {
+  function_name = "forgotPassword"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/forgotPassword/forgotPassword.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/forgotPassword/forgotPassword.zip")
+
+  environment {
+    variables = {
+      COGNITO_CLIENT_ID = aws_cognito_user_pool_client.safetube_user_pool_client.id
+    }
+  }
+
+  timeout     = 30
+  memory_size = 128
+}
+
+# Reset password Lambda
+resource "aws_lambda_function" "reset_password" {
+  function_name = "resetPassword"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/resetPassword/resetPassword.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/resetPassword/resetPassword.zip")
+
+  environment {
+    variables = {
+      COGNITO_CLIENT_ID = aws_cognito_user_pool_client.safetube_user_pool_client.id
+    }
+  }
+
+  timeout     = 30
+  memory_size = 128
+}

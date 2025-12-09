@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "r
 import "./App.css";
 import Onboarding from "./components/Onboarding";
 import Auth from "./components/Auth";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import AddVideo from "./components/AddVideo";
 import MyVideos from "./components/MyVideos";
 import Profile from "./components/Profile";
@@ -66,6 +68,8 @@ function App() {
 
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/auth" element={<AuthRoute />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/add-video"

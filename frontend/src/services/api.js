@@ -185,6 +185,48 @@ export const logIn = async (email, password) => {
   });
 };
 
+/**
+ * Request password reset code
+ */
+export const forgotPassword = async (email) => {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.FORGOT_PASSWORD}`, {
+    method: HTTP_METHODS.POST,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to send reset code");
+  }
+
+  return data;
+};
+
+/**
+ * Reset password with verification code
+ */
+export const resetPassword = async (email, code, newPassword) => {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.RESET_PASSWORD}`, {
+    method: HTTP_METHODS.POST,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, code, newPassword }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to reset password");
+  }
+
+  return data;
+};
+
 // ============================================================================
 // Video API
 // ============================================================================

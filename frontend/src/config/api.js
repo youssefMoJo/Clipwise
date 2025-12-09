@@ -14,6 +14,8 @@ export const API_ENDPOINTS = {
   SIGN_UP: "/signup",
   LOG_IN: "/login",
   REFRESH_TOKEN: "/refresh",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
 
   // Video Operations
   PROCESS_VIDEO: "/process",

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { signUp, logIn } from "../services/api";
 import {
   AuthContainer,
@@ -21,6 +22,7 @@ import {
 } from "./Auth.styled";
 
 const Auth = ({ onAuthSuccess }) => {
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -183,6 +185,14 @@ const Auth = ({ onAuthSuccess }) => {
               : "Log In"}
           </AuthSubmitBtn>
         </AuthForm>
+
+        {!isSignUp && (
+          <AuthFooter>
+            <LinkBtn onClick={() => navigate("/forgot-password")} disabled={loading}>
+              Forgot Password?
+            </LinkBtn>
+          </AuthFooter>
+        )}
 
         {/* <AuthFooter>
           <p>

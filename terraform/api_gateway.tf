@@ -536,6 +536,174 @@ resource "aws_lambda_permission" "allow_apigateway_delete_video" {
   source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
 }
 
+# Forgot password endpoint
+resource "aws_api_gateway_resource" "forgot_password" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  parent_id   = aws_api_gateway_rest_api.safetube_api.root_resource_id
+  path_part   = "forgot-password"
+}
+
+resource "aws_api_gateway_method" "forgot_password_post" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.forgot_password.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "forgot_password_options" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.forgot_password.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "forgot_password_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.forgot_password.id
+  http_method = aws_api_gateway_method.forgot_password_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_method_response" "forgot_password_options_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.forgot_password.id
+  http_method = aws_api_gateway_method.forgot_password_options.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "forgot_password_options_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.forgot_password.id
+  http_method = aws_api_gateway_method.forgot_password_options.http_method
+  status_code = aws_api_gateway_method_response.forgot_password_options_response_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.forgot_password_options_integration
+  ]
+}
+
+resource "aws_api_gateway_integration" "forgot_password_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.forgot_password.id
+  http_method = aws_api_gateway_method.forgot_password_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.forgot_password.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigateway_forgot_password" {
+  statement_id  = "AllowAPIGatewayInvokeForgotPassword"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.forgot_password.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
+}
+
+# Reset password endpoint
+resource "aws_api_gateway_resource" "reset_password" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  parent_id   = aws_api_gateway_rest_api.safetube_api.root_resource_id
+  path_part   = "reset-password"
+}
+
+resource "aws_api_gateway_method" "reset_password_post" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.reset_password.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "reset_password_options" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.reset_password.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "reset_password_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.reset_password.id
+  http_method = aws_api_gateway_method.reset_password_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_method_response" "reset_password_options_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.reset_password.id
+  http_method = aws_api_gateway_method.reset_password_options.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "reset_password_options_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.reset_password.id
+  http_method = aws_api_gateway_method.reset_password_options.http_method
+  status_code = aws_api_gateway_method_response.reset_password_options_response_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.reset_password_options_integration
+  ]
+}
+
+resource "aws_api_gateway_integration" "reset_password_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.reset_password.id
+  http_method = aws_api_gateway_method.reset_password_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.reset_password.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigateway_reset_password" {
+  statement_id  = "AllowAPIGatewayInvokeResetPassword"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.reset_password.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
+}
+
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on  = [
     aws_api_gateway_integration.lambda_integration,
@@ -558,6 +726,18 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.refresh_options_integration,
     aws_api_gateway_method_response.refresh_options_response_200,
     aws_api_gateway_integration_response.refresh_options_integration_response_200,
+    aws_api_gateway_integration.forgot_password_integration,
+    aws_api_gateway_method.forgot_password_post,
+    aws_api_gateway_method.forgot_password_options,
+    aws_api_gateway_integration.forgot_password_options_integration,
+    aws_api_gateway_method_response.forgot_password_options_response_200,
+    aws_api_gateway_integration_response.forgot_password_options_integration_response_200,
+    aws_api_gateway_integration.reset_password_integration,
+    aws_api_gateway_method.reset_password_post,
+    aws_api_gateway_method.reset_password_options,
+    aws_api_gateway_integration.reset_password_options_integration,
+    aws_api_gateway_method_response.reset_password_options_response_200,
+    aws_api_gateway_integration_response.reset_password_options_integration_response_200,
     aws_api_gateway_integration.videos_integration,
     aws_api_gateway_method.videos_get,
     aws_api_gateway_method.videos_options,
