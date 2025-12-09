@@ -193,11 +193,11 @@ const Auth = ({ onAuthSuccess }) => {
           </p>
         </AuthFooter> */}
 
-        <GuestSection>
+        {/* <GuestSection>
           <GuestBtn onClick={handleGuestLogin} disabled={loading}>
             Continue as Guest
           </GuestBtn>
-        </GuestSection>
+        </GuestSection> */}
       </AuthCard>
     </AuthContainer>
   );
