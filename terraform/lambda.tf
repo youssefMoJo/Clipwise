@@ -232,3 +232,24 @@ resource "aws_lambda_function" "reset_password" {
   timeout     = 30
   memory_size = 128
 }
+
+# Submit feedback Lambda
+resource "aws_lambda_function" "submit_feedback" {
+  function_name = "submitFeedback"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/submitFeedback/submitFeedback.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/submitFeedback/submitFeedback.zip")
+
+  environment {
+    variables = {
+      DYNAMO_FEEDBACK_TABLE = aws_dynamodb_table.safetube_feedback.name
+    }
+  }
+
+  timeout     = 30
+  memory_size = 128
+}

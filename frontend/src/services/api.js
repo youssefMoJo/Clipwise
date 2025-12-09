@@ -313,3 +313,17 @@ export const logout = () => {
   localStorage.removeItem("is_guest");
   localStorage.removeItem("guest_id");
 };
+
+// ============================================================================
+// Feedback API
+// ============================================================================
+
+/**
+ * Submit user feedback
+ */
+export const submitFeedback = async ({ message, email, rating }) => {
+  return apiRequest(API_ENDPOINTS.SUBMIT_FEEDBACK, {
+    method: HTTP_METHODS.POST,
+    body: JSON.stringify({ message, email, rating }),
+  });
+};

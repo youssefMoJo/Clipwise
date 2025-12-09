@@ -704,6 +704,90 @@ resource "aws_lambda_permission" "allow_apigateway_reset_password" {
   source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
 }
 
+# Feedback endpoint
+resource "aws_api_gateway_resource" "feedback" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  parent_id   = aws_api_gateway_rest_api.safetube_api.root_resource_id
+  path_part   = "feedback"
+}
+
+resource "aws_api_gateway_method" "feedback_post" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.feedback.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "feedback_options" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.feedback.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "feedback_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.feedback.id
+  http_method = aws_api_gateway_method.feedback_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_method_response" "feedback_options_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.feedback.id
+  http_method = aws_api_gateway_method.feedback_options.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "feedback_options_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.feedback.id
+  http_method = aws_api_gateway_method.feedback_options.http_method
+  status_code = aws_api_gateway_method_response.feedback_options_response_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.feedback_options_integration
+  ]
+}
+
+resource "aws_api_gateway_integration" "feedback_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.feedback.id
+  http_method = aws_api_gateway_method.feedback_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.submit_feedback.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigateway_feedback" {
+  statement_id  = "AllowAPIGatewayInvokeFeedback"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.submit_feedback.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
+}
+
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on  = [
     aws_api_gateway_integration.lambda_integration,
@@ -738,6 +822,12 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.reset_password_options_integration,
     aws_api_gateway_method_response.reset_password_options_response_200,
     aws_api_gateway_integration_response.reset_password_options_integration_response_200,
+    aws_api_gateway_integration.feedback_integration,
+    aws_api_gateway_method.feedback_post,
+    aws_api_gateway_method.feedback_options,
+    aws_api_gateway_integration.feedback_options_integration,
+    aws_api_gateway_method_response.feedback_options_response_200,
+    aws_api_gateway_integration_response.feedback_options_integration_response_200,
     aws_api_gateway_integration.videos_integration,
     aws_api_gateway_method.videos_get,
     aws_api_gateway_method.videos_options,

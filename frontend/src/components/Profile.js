@@ -9,8 +9,6 @@ import {
   Label,
   Value,
   Badge,
-  Form,
-  TextArea,
   Button,
   DangerButton,
   DeleteSection,
@@ -21,8 +19,6 @@ import {
 
 function Profile() {
   const navigate = useNavigate();
-  const [feedback, setFeedback] = useState("");
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
@@ -34,25 +30,6 @@ function Profile() {
       ? userEmail.split("@")[0]
       : localStorage.getItem("user_name") || "Guest User";
   const guestId = localStorage.getItem("guest_id");
-
-  const handleFeedbackSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!feedback.trim()) {
-      alert("Please enter your feedback");
-      return;
-    }
-
-    // TODO: Send feedback to backend API
-    console.log("Feedback submitted:", feedback);
-
-    setFeedbackSubmitted(true);
-    setFeedback("");
-
-    setTimeout(() => {
-      setFeedbackSubmitted(false);
-    }, 3000);
-  };
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== "DELETE") {
@@ -95,24 +72,6 @@ function Profile() {
             <Value>{isGuest ? "Not available (Guest)" : userEmail}</Value>
           </InfoRow>
         </Section>
-        {/* {!isGuest ? (
-          <Section>
-            <SectionTitle>Send Feedback</SectionTitle>
-            <Form onSubmit={handleFeedbackSubmit}>
-              <TextArea
-                placeholder="Share your thoughts, suggestions, or report issues..."
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={6}
-              />
-              <Button type="submit" disabled={feedbackSubmitted}>
-                {feedbackSubmitted ? "✓ Feedback Sent!" : "Submit Feedback"}
-              </Button>
-            </Form>
-          </Section>
-        ) : (
-          ""
-        )} */}
 
         {/* <Section>
           <SectionTitle>Account Actions</SectionTitle>

@@ -16,12 +16,14 @@ import {
   MobileMenu,
   MobileNavLink,
 } from "./Navbar.styled";
+import FeedbackModal from "./FeedbackModal";
 
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
   const userName = localStorage.getItem("user_name") || "User";
 
@@ -84,9 +86,17 @@ function Navbar() {
 
           {showDropdown && (
             <UserDropdown>
-              {/* <DropdownItem onClick={() => navigate("/profile")}>
+              <DropdownItem onClick={() => navigate("/profile")}>
                 ⚙️ Profile
-              </DropdownItem> */}
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {
+                  setShowDropdown(false);
+                  setShowFeedbackModal(true);
+                }}
+              >
+                💬 Send Feedback
+              </DropdownItem>
               <DropdownItem onClick={handleLogout} $danger>
                 🚪 {isGuest ? "Exit Guest Mode" : "Logout"}
               </DropdownItem>
@@ -118,11 +128,24 @@ function Navbar() {
           <MobileNavLink onClick={() => handleNavClick("/profile")}>
             ⚙️ Profile
           </MobileNavLink>
+          <MobileNavLink
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setShowFeedbackModal(true);
+            }}
+          >
+            💬 Send Feedback
+          </MobileNavLink>
           <MobileNavLink onClick={handleMobileLogout} $danger>
             🚪 {isGuest ? "Exit Guest Mode" : "Logout"}
           </MobileNavLink>
         </MobileMenu>
       )}
+
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </NavbarContainer>
   );
 }

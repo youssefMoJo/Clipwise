@@ -25,6 +25,9 @@ export const API_ENDPOINTS = {
 
   // User Operations
   GET_USER_PROFILE: "/profile",
+
+  // Feedback
+  SUBMIT_FEEDBACK: "/feedback",
 };
 
 // HTTP Methods
