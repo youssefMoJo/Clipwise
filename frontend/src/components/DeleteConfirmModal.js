@@ -1,10 +1,29 @@
 import React from "react";
+import ReactDOM from "react-dom";
 import styled, { keyframes } from "styled-components";
 
-const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle, isDeleting }) => {
+const DeleteConfirmModal = ({
+  isOpen,
+  onConfirm,
+  onCancel,
+  videoTitle,
+  isDeleting,
+}) => {
+  // Prevent body scroll when modal is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  return ReactDOM.createPortal(
     <ModalOverlay onClick={isDeleting ? undefined : onCancel}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <IconContainer>
@@ -17,7 +36,9 @@ const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle, isDeletin
           undone.
         </ModalMessage>
         <ButtonGroup>
-          <CancelButton onClick={onCancel} disabled={isDeleting}>Cancel</CancelButton>
+          <CancelButton onClick={onCancel} disabled={isDeleting}>
+            Cancel
+          </CancelButton>
           <DeleteButton onClick={onConfirm} disabled={isDeleting}>
             {isDeleting ? (
               <>
@@ -29,7 +50,8 @@ const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, videoTitle, isDeletin
           </DeleteButton>
         </ButtonGroup>
       </ModalContent>
-    </ModalOverlay>
+    </ModalOverlay>,
+    document.body
   );
 };
 
@@ -83,7 +105,7 @@ const ModalOverlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 10000;
   animation: ${fadeIn} 0.2s ease-out;
   padding: 1rem;
 `;
