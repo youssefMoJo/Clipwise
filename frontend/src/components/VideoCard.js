@@ -58,7 +58,6 @@ function VideoCard({ video, onClick, onDelete }) {
           <span>🎬</span>
         </ThumbnailPlaceholder>
       )}
-      {console.log(video)}
       <Content>
         <Title>{video.title}</Title>
         <MetaInfo>

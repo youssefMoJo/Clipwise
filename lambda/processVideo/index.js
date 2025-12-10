@@ -16,6 +16,8 @@ const RAPID_API_KEY = process.env.RAPID_API_KEY;
 const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 const VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
 const USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
+const GUEST_TABLE = "safetube_guest_users";
+const MAX_GUEST_VIDEOS = 3;
 
 function extractYouTubeID(url) {
   try {
@@ -46,13 +48,21 @@ function getUserIdFromEvent(event) {
   return claims.sub;
 }
 
+// Get guest ID from headers
+function getGuestIdFromEvent(event) {
+  return event.headers?.["X-Guest-ID"] || event.headers?.["x-guest-id"];
+}
+
 export const handler = async (event) => {
   try {
-    // Get user_id from JWT token (set by Cognito authorizer)
+    // Check if this is a guest user or authenticated user
     const userId = getUserIdFromEvent(event);
+    const guestId = getGuestIdFromEvent(event);
+    const isGuest = !userId && !!guestId;
 
-    if (!userId) {
-      console.error("Unauthorized access: user ID not found in token");
+    // Must have either userId or guestId
+    if (!userId && !guestId) {
+      console.error("Unauthorized access: no user ID or guest ID found");
       return {
         statusCode: 401,
         headers: {
@@ -60,9 +70,68 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "Unauthorized - user ID not found in token",
+          message: "Unauthorized - authentication required",
         }),
       };
+    }
+
+    const userIdentifier = userId || guestId;
+    const userTable = isGuest ? GUEST_TABLE : USERS_TABLE;
+
+    // For guest users, check video limit
+    if (isGuest) {
+      const guestData = await ddb.send(
+        new GetCommand({
+          TableName: GUEST_TABLE,
+          Key: { guest_id: guestId },
+        })
+      );
+
+      if (!guestData.Item) {
+        return {
+          statusCode: 404,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message: "Guest session not found or expired",
+          }),
+        };
+      }
+
+      // Check if guest has already converted
+      if (guestData.Item.converted_to_user_id) {
+        return {
+          statusCode: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message:
+              "Guest account has been converted. Please log in with your account.",
+          }),
+        };
+      }
+
+      const guestVideoCount = guestData.Item.video_count || 0;
+      if (guestVideoCount >= MAX_GUEST_VIDEOS) {
+        return {
+          statusCode: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({
+            message:
+              "Guest video limit reached. Please create an account to continue.",
+            videos_uploaded: guestVideoCount,
+            max_videos: MAX_GUEST_VIDEOS,
+            limit_reached: true,
+          }),
+        };
+      }
     }
 
     const body = JSON.parse(event.body);
@@ -108,8 +177,8 @@ export const handler = async (event) => {
         // Check if video is already in user's videos array
         const userResult = await ddb.send(
           new GetCommand({
-            TableName: USERS_TABLE,
-            Key: { user_id: userId },
+            TableName: userTable,
+            Key: isGuest ? { guest_id: guestId } : { user_id: userId },
           })
         );
 
@@ -131,22 +200,57 @@ export const handler = async (event) => {
           };
         }
 
+        // For guests, check if adding this video would exceed limit
+        if (isGuest) {
+          const currentCount = userResult.Item?.video_count || 0;
+          if (currentCount >= MAX_GUEST_VIDEOS) {
+            return {
+              statusCode: 403,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+              body: JSON.stringify({
+                message:
+                  "Guest video limit reached. Please create an account to continue.",
+                videos_uploaded: currentCount,
+                max_videos: MAX_GUEST_VIDEOS,
+                limit_reached: true,
+              }),
+            };
+          }
+        }
+
         // Video exists but not in user's array - add it (resource reuse)
-        await ddb.send(
-          new UpdateCommand({
-            TableName: USERS_TABLE,
-            Key: { user_id: userId },
-            UpdateExpression:
-              "SET videos = list_append(if_not_exists(videos, :empty), :video)",
-            ExpressionAttributeValues: {
+        const updateExpression = isGuest
+          ? "SET videos = list_append(if_not_exists(videos, :empty), :video), video_count = if_not_exists(video_count, :zero) + :one"
+          : "SET videos = list_append(if_not_exists(videos, :empty), :video)";
+
+        const expressionValues = isGuest
+          ? {
               ":empty": [],
               ":video": [youtube_id],
-            },
+              ":zero": 0,
+              ":one": 1,
+            }
+          : {
+              ":empty": [],
+              ":video": [youtube_id],
+            };
+
+        await ddb.send(
+          new UpdateCommand({
+            TableName: userTable,
+            Key: isGuest ? { guest_id: guestId } : { user_id: userId },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: expressionValues,
           })
         );
 
         console.log(
-          `Added existing video ${youtube_id} to user ${userId}'s library`
+          `Added existing video ${youtube_id} to ${
+            isGuest ? "guest" : "user"
+          } ${userIdentifier}'s library`
         );
 
         return {
@@ -193,7 +297,7 @@ export const handler = async (event) => {
           MessageBody: JSON.stringify({
             video_id: youtube_id,
             youtube_link: youtube_link,
-            uploaded_by: userId,
+            uploaded_by: userIdentifier,
             dynamo_videos_table: VIDEOS_TABLE,
             retry_count: 0,
           }),
@@ -276,7 +380,7 @@ export const handler = async (event) => {
       picture: data.metadata.thumbnailUrl,
       duration: durationInSeconds,
       youtube_link,
-      uploaded_by: userId, // Cognito user ID from JWT token
+      uploaded_by: userIdentifier, // User ID or Guest ID
       status: "pending", //Track processing lifecycle: pending, processing, done, failed
       created_at: new Date().toISOString(),
     };
@@ -286,6 +390,32 @@ export const handler = async (event) => {
       new PutCommand({
         TableName: VIDEOS_TABLE,
         Item: metadata,
+      })
+    );
+
+    // Add video to user/guest account and increment count for guests
+    const updateExpression = isGuest
+      ? "SET videos = list_append(if_not_exists(videos, :empty), :video), video_count = if_not_exists(video_count, :zero) + :one"
+      : "SET videos = list_append(if_not_exists(videos, :empty), :video)";
+
+    const expressionValues = isGuest
+      ? {
+          ":empty": [],
+          ":video": [metadata.video_id],
+          ":zero": 0,
+          ":one": 1,
+        }
+      : {
+          ":empty": [],
+          ":video": [metadata.video_id],
+        };
+
+    await ddb.send(
+      new UpdateCommand({
+        TableName: userTable,
+        Key: isGuest ? { guest_id: guestId } : { user_id: userId },
+        UpdateExpression: updateExpression,
+        ExpressionAttributeValues: expressionValues,
       })
     );
 

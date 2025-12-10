@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signUp, logIn } from "../services/api";
+import { signUp, logIn, guestLogin, convertGuestToUser } from "../services/api";
 import {
   AuthContainer,
   AuthCard,
@@ -49,6 +49,10 @@ const Auth = ({ onAuthSuccess }) => {
 
     try {
       if (isSignUp) {
+        // Check if user was a guest before signing up
+        const wasGuest = localStorage.getItem("is_guest") === "true";
+        const guestId = localStorage.getItem("guest_id");
+
         // Sign up
         await signUp(email, password);
         setError("");
@@ -71,6 +75,20 @@ const Auth = ({ onAuthSuccess }) => {
           const username = email.split("@")[0];
           localStorage.setItem("user_name", username);
           localStorage.setItem("is_guest", "false");
+
+          // If user was a guest, convert their account
+          if (wasGuest && guestId) {
+            try {
+              await convertGuestToUser();
+              console.log("Guest account successfully converted to user account");
+            } catch (conversionError) {
+              console.error("Failed to convert guest account:", conversionError);
+              // Don't fail the signup if conversion fails
+            } finally {
+              // Clear guest ID after conversion attempt
+              localStorage.removeItem("guest_id");
+            }
+          }
         }
 
         onAuthSuccess();
@@ -111,18 +129,26 @@ const Auth = ({ onAuthSuccess }) => {
     setPassword("");
   };
 
-  const handleGuestLogin = () => {
-    // Generate a unique guest ID
-    const guestId = `guest_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
+  const handleGuestLogin = async () => {
+    setError("");
+    setLoading(true);
 
-    // Store guest session
-    localStorage.setItem("guest_id", guestId);
-    localStorage.setItem("is_guest", "true");
+    try {
+      // Call backend to create guest session
+      const data = await guestLogin();
 
-    // Call the success callback
-    onAuthSuccess();
+      // Store guest session info
+      localStorage.setItem("guest_id", data.guest_id);
+      localStorage.setItem("is_guest", "true");
+      localStorage.setItem("user_name", "Guest");
+
+      // Call the success callback
+      onAuthSuccess();
+    } catch (err) {
+      setError(err.message || "Failed to create guest session");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -194,20 +220,11 @@ const Auth = ({ onAuthSuccess }) => {
           </AuthFooter>
         )}
 
-        {/* <AuthFooter>
-          <p>
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <LinkBtn onClick={toggleMode} disabled={loading}>
-              {isSignUp ? "Log In" : "Sign Up"}
-            </LinkBtn>
-          </p>
-        </AuthFooter> */}
-
-        {/* <GuestSection>
+        <GuestSection>
           <GuestBtn onClick={handleGuestLogin} disabled={loading}>
             Continue as Guest
           </GuestBtn>
-        </GuestSection> */}
+        </GuestSection>
       </AuthCard>
     </AuthContainer>
   );

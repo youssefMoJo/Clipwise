@@ -114,7 +114,15 @@ const AddVideo = ({ onVideoSubmit }) => {
         navigate("/my-videos");
       }, 2000);
     } catch (err) {
-      setError(err.message || "Failed to process video. Please try again.");
+      const errorMessage = err.message || "Failed to process video. Please try again.";
+
+      // Check if it's a guest limit error
+      if (errorMessage.includes("Guest video limit reached") || errorMessage.includes("limit reached")) {
+        setError("You've reached the guest upload limit. Create an account to continue uploading!");
+      } else {
+        setError(errorMessage);
+      }
+
       setIsLoading(false);
     }
   };

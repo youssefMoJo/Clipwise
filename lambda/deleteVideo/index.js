@@ -11,6 +11,7 @@ const dynamoClient = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 const USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
+const GUEST_TABLE = "safetube_guest_users";
 
 // Extract user_id from Cognito JWT token
 function getUserIdFromEvent(event) {
@@ -21,12 +22,20 @@ function getUserIdFromEvent(event) {
   return null;
 }
 
+// Get guest ID from headers
+function getGuestIdFromEvent(event) {
+  return event.headers?.["X-Guest-ID"] || event.headers?.["x-guest-id"];
+}
+
 export const handler = async (event) => {
   try {
-    // Get user_id from JWT token
+    // Check if this is a guest user or authenticated user
     const userId = getUserIdFromEvent(event);
+    const guestId = getGuestIdFromEvent(event);
+    const isGuest = !userId && !!guestId;
 
-    if (!userId) {
+    // Must have either userId or guestId
+    if (!userId && !guestId) {
       return {
         statusCode: 401,
         headers: {
@@ -34,7 +43,7 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "Unauthorized - user ID not found in token",
+          message: "Unauthorized - authentication required",
         }),
       };
     }
@@ -55,11 +64,14 @@ export const handler = async (event) => {
       };
     }
 
-    // Get user record
+    const userTable = isGuest ? GUEST_TABLE : USERS_TABLE;
+    const userKey = isGuest ? { guest_id: guestId } : { user_id: userId };
+
+    // Get user/guest record
     const userResult = await ddb.send(
       new GetCommand({
-        TableName: USERS_TABLE,
-        Key: { user_id: userId },
+        TableName: userTable,
+        Key: userKey,
       })
     );
 
@@ -71,7 +83,7 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "User not found",
+          message: isGuest ? "Guest session not found or expired" : "User not found",
         }),
       };
     }
@@ -95,14 +107,27 @@ export const handler = async (event) => {
     // Remove video_id from user's videos array (atomic update)
     const updatedVideos = userVideos.filter((id) => id !== videoId);
 
+    // For guests, also decrement video_count
+    const updateExpression = isGuest
+      ? "SET videos = :v, video_count = if_not_exists(video_count, :zero) - :one"
+      : "SET videos = :v";
+
+    const expressionValues = isGuest
+      ? {
+          ":v": updatedVideos,
+          ":zero": 0,
+          ":one": 1,
+        }
+      : {
+          ":v": updatedVideos,
+        };
+
     await ddb.send(
       new UpdateCommand({
-        TableName: USERS_TABLE,
-        Key: { user_id: userId },
-        UpdateExpression: "SET videos = :v",
-        ExpressionAttributeValues: {
-          ":v": updatedVideos,
-        },
+        TableName: userTable,
+        Key: userKey,
+        UpdateExpression: updateExpression,
+        ExpressionAttributeValues: expressionValues,
       })
     );
 

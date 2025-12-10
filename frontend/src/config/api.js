@@ -17,6 +17,10 @@ export const API_ENDPOINTS = {
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
 
+  // Guest Operations
+  GUEST_LOGIN: "/guest-login",
+  CONVERT_GUEST: "/convert-guest",
+
   // Video Operations
   PROCESS_VIDEO: "/process",
   GET_VIDEOS: "/videos",

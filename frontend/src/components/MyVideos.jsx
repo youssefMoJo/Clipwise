@@ -14,6 +14,8 @@ const MyVideos = () => {
   const [videoToDelete, setVideoToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [guestInfo, setGuestInfo] = useState(null);
+  const isGuest = localStorage.getItem("is_guest") === "true";
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -24,6 +26,12 @@ const MyVideos = () => {
         // The API returns videos in a specific format
         // Adjust based on your backend response structure
         setVideos(data.videos || data || []);
+
+        // If guest user, extract guest info
+        if (data.guest_info) {
+          setGuestInfo(data.guest_info);
+        }
+
         setError("");
       } catch (error) {
         console.error("Error fetching videos:", error);
@@ -113,6 +121,36 @@ const MyVideos = () => {
             {videos.length} {videos.length === 1 ? "video" : "videos"}
           </VideoCount>
         </Header>
+
+        {isGuest && guestInfo && (
+          <GuestBanner $limitReached={guestInfo.limit_reached}>
+            <GuestBannerContent>
+              <GuestBannerIcon>
+                {guestInfo.limit_reached ? "⚠️" : "👋"}
+              </GuestBannerIcon>
+              <GuestBannerText>
+                <GuestBannerTitle>
+                  {guestInfo.limit_reached
+                    ? "Guest Limit Reached"
+                    : "You're using ClipWise as a Guest"}
+                </GuestBannerTitle>
+                <GuestBannerSubtitle>
+                  {guestInfo.limit_reached
+                    ? `You've uploaded ${guestInfo.video_count} of ${guestInfo.max_videos} videos. Create an account to keep your videos forever and upload unlimited content.`
+                    : `${guestInfo.videos_remaining} upload${
+                        guestInfo.videos_remaining !== 1 ? "s" : ""
+                      } remaining (${guestInfo.video_count}/${
+                        guestInfo.max_videos
+                      } used). Create an account to save your progress!`}
+                </GuestBannerSubtitle>
+              </GuestBannerText>
+              <GuestUpgradeButton onClick={() => navigate("/auth")}>
+                Create Account
+              </GuestUpgradeButton>
+            </GuestBannerContent>
+          </GuestBanner>
+        )}
+
         {videos.length === 0 ? (
           <EmptyState>
             <EmptyIcon>🎬</EmptyIcon>
@@ -128,7 +166,7 @@ const MyVideos = () => {
           <VideoGrid>
             {videos.map((video) => (
               <VideoCard
-                key={video.id}
+                key={video.video_id}
                 video={video}
                 onClick={handleVideoClick}
                 onDelete={handleDeleteClick}
@@ -337,6 +375,88 @@ const RetryButton = styled.button`
 
   &:active {
     transform: translateY(-1px);
+  }
+`;
+
+const GuestBanner = styled.div`
+  background: ${(props) =>
+    props.$limitReached
+      ? "linear-gradient(135deg, rgba(255, 100, 100, 0.15), rgba(255, 150, 100, 0.15))"
+      : "linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))"};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 2px solid
+    ${(props) =>
+      props.$limitReached
+        ? "rgba(255, 100, 100, 0.3)"
+        : "rgba(255, 255, 255, 0.2)"};
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+`;
+
+const GuestBannerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+  }
+`;
+
+const GuestBannerIcon = styled.div`
+  font-size: 3rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+`;
+
+const GuestBannerText = styled.div`
+  flex: 1;
+`;
+
+const GuestBannerTitle = styled.h3`
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const GuestBannerSubtitle = styled.p`
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  line-height: 1.5;
+`;
+
+const GuestUpgradeButton = styled.button`
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    background: #f8f9ff;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 

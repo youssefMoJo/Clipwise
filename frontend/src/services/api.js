@@ -227,6 +227,36 @@ export const resetPassword = async (email, code, newPassword) => {
   return data;
 };
 
+/**
+ * Create a guest session
+ */
+export const guestLogin = async () => {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.GUEST_LOGIN}`, {
+    method: HTTP_METHODS.POST,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to create guest session");
+  }
+
+  return data;
+};
+
+/**
+ * Convert guest account to real user account
+ * Must be called after user signs up
+ */
+export const convertGuestToUser = async () => {
+  return apiRequest(API_ENDPOINTS.CONVERT_GUEST, {
+    method: HTTP_METHODS.POST,
+  });
+};
+
 // ============================================================================
 // Video API
 // ============================================================================

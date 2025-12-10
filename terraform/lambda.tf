@@ -253,3 +253,33 @@ resource "aws_lambda_function" "submit_feedback" {
   timeout     = 30
   memory_size = 128
 }
+
+# Guest login Lambda
+resource "aws_lambda_function" "guest_login" {
+  function_name = "guestLogin"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/guestLogin/guestLogin.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/guestLogin/guestLogin.zip")
+
+  timeout     = 30
+  memory_size = 128
+}
+
+# Convert guest to user Lambda
+resource "aws_lambda_function" "convert_guest_to_user" {
+  function_name = "convertGuestToUser"
+  role          = aws_iam_role.lambda_exec_role.arn
+
+  handler = "index.handler"
+  runtime = "nodejs20.x"
+
+  filename         = "${path.module}/../lambda/convertGuestToUser/convertGuestToUser.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambda/convertGuestToUser/convertGuestToUser.zip")
+
+  timeout     = 30
+  memory_size = 128
+}

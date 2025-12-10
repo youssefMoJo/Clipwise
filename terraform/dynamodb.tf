@@ -54,3 +54,28 @@ resource "aws_dynamodb_table" "safetube_feedback" {
     Project     = "SafeTube"
   }
 }
+
+resource "aws_dynamodb_table" "safetube_guest_users" {
+  name         = "safetube_guest_users"
+  billing_mode = "PAY_PER_REQUEST" # On-demand pricing (no capacity planning)
+
+  hash_key = "guest_id"
+
+  # Only declare attributes used as keys (primary key or index keys)
+  attribute {
+    name = "guest_id"
+    type = "S" # String (generated UUID)
+  }
+
+  # TTL to automatically delete expired guest sessions after 7 days
+  # Note: expires_at doesn't need to be declared as an attribute
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+
+  tags = {
+    Environment = "dev"
+    Project     = "SafeTube"
+  }
+}
