@@ -61,7 +61,7 @@ resource "aws_api_gateway_integration_response" "process_options_integration_res
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
 
   depends_on = [
@@ -398,7 +398,7 @@ resource "aws_api_gateway_integration_response" "videos_options_integration_resp
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
 
   depends_on = [
@@ -788,6 +788,175 @@ resource "aws_lambda_permission" "allow_apigateway_feedback" {
   source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
 }
 
+# Guest login endpoint
+resource "aws_api_gateway_resource" "guest_login" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  parent_id   = aws_api_gateway_rest_api.safetube_api.root_resource_id
+  path_part   = "guest-login"
+}
+
+resource "aws_api_gateway_method" "guest_login_post" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.guest_login.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method" "guest_login_options" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.guest_login.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "guest_login_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.guest_login.id
+  http_method = aws_api_gateway_method.guest_login_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_method_response" "guest_login_options_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.guest_login.id
+  http_method = aws_api_gateway_method.guest_login_options.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "guest_login_options_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.guest_login.id
+  http_method = aws_api_gateway_method.guest_login_options.http_method
+  status_code = aws_api_gateway_method_response.guest_login_options_response_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.guest_login_options_integration
+  ]
+}
+
+resource "aws_api_gateway_integration" "guest_login_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.guest_login.id
+  http_method = aws_api_gateway_method.guest_login_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.guest_login.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigateway_guest_login" {
+  statement_id  = "AllowAPIGatewayInvokeGuestLogin"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.guest_login.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
+}
+
+# Convert guest to user endpoint
+resource "aws_api_gateway_resource" "convert_guest" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  parent_id   = aws_api_gateway_rest_api.safetube_api.root_resource_id
+  path_part   = "convert-guest"
+}
+
+resource "aws_api_gateway_method" "convert_guest_post" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.convert_guest.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+}
+
+resource "aws_api_gateway_method" "convert_guest_options" {
+  rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
+  resource_id   = aws_api_gateway_resource.convert_guest.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "convert_guest_options_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.convert_guest.id
+  http_method = aws_api_gateway_method.convert_guest_options.http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{ \"statusCode\": 200 }"
+  }
+}
+
+resource "aws_api_gateway_method_response" "convert_guest_options_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.convert_guest.id
+  http_method = aws_api_gateway_method.convert_guest_options.http_method
+  status_code = "200"
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Headers" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "convert_guest_options_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.convert_guest.id
+  http_method = aws_api_gateway_method.convert_guest_options.http_method
+  status_code = aws_api_gateway_method_response.convert_guest_options_response_200.status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.convert_guest_options_integration
+  ]
+}
+
+resource "aws_api_gateway_integration" "convert_guest_integration" {
+  rest_api_id = aws_api_gateway_rest_api.safetube_api.id
+  resource_id = aws_api_gateway_resource.convert_guest.id
+  http_method = aws_api_gateway_method.convert_guest_post.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.convert_guest_to_user.invoke_arn
+}
+
+resource "aws_lambda_permission" "allow_apigateway_convert_guest" {
+  statement_id  = "AllowAPIGatewayInvokeConvertGuest"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.convert_guest_to_user.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.safetube_api.execution_arn}/*/*"
+}
+
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on  = [
     aws_api_gateway_integration.lambda_integration,
@@ -842,6 +1011,18 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration_response.video_id_options_integration_response_200,
     aws_api_gateway_integration.video_delete_integration,
     aws_api_gateway_method.video_delete,
+    aws_api_gateway_integration.guest_login_integration,
+    aws_api_gateway_method.guest_login_post,
+    aws_api_gateway_method.guest_login_options,
+    aws_api_gateway_integration.guest_login_options_integration,
+    aws_api_gateway_method_response.guest_login_options_response_200,
+    aws_api_gateway_integration_response.guest_login_options_integration_response_200,
+    aws_api_gateway_integration.convert_guest_integration,
+    aws_api_gateway_method.convert_guest_post,
+    aws_api_gateway_method.convert_guest_options,
+    aws_api_gateway_integration.convert_guest_options_integration,
+    aws_api_gateway_method_response.convert_guest_options_response_200,
+    aws_api_gateway_integration_response.convert_guest_options_integration_response_200,
     aws_api_gateway_authorizer.cognito_authorizer
   ]
   rest_api_id = aws_api_gateway_rest_api.safetube_api.id
