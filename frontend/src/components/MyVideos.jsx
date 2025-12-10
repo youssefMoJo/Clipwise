@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { getVideos, deleteVideo } from "../services/api";
 import VideoCard from "./VideoCard";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import UpgradeAccountModal from "./UpgradeAccountModal";
 import Toast from "./Toast";
 
 const MyVideos = () => {
@@ -15,6 +16,7 @@ const MyVideos = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
   const [guestInfo, setGuestInfo] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
 
   useEffect(() => {
@@ -87,6 +89,16 @@ const MyVideos = () => {
     setVideoToDelete(null);
   };
 
+  const handleUpgradeClick = () => {
+    setShowUpgradeModal(true);
+  };
+
+  const handleUpgradeSuccess = () => {
+    setShowUpgradeModal(false);
+    // Refresh the page to show the updated user state
+    window.location.reload();
+  };
+
   if (loading) {
     return (
       <Container>
@@ -144,7 +156,7 @@ const MyVideos = () => {
                       } used). Create an account to save your progress!`}
                 </GuestBannerSubtitle>
               </GuestBannerText>
-              <GuestUpgradeButton onClick={() => navigate("/auth")}>
+              <GuestUpgradeButton onClick={handleUpgradeClick}>
                 Create Account
               </GuestUpgradeButton>
             </GuestBannerContent>
@@ -182,6 +194,12 @@ const MyVideos = () => {
         onCancel={handleDeleteCancel}
         videoTitle={videoToDelete?.title || ""}
         isDeleting={isDeleting}
+      />
+
+      <UpgradeAccountModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onSuccess={handleUpgradeSuccess}
       />
 
       {toast && (

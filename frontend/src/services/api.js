@@ -78,15 +78,18 @@ const getAuthHeaders = async () => {
   };
 
   const isGuest = localStorage.getItem("is_guest") === "true";
+  const guestId = localStorage.getItem("guest_id");
+  const idToken = localStorage.getItem("id_token");
 
-  if (isGuest) {
-    const guestId = localStorage.getItem("guest_id");
-    if (guestId) {
-      headers["X-Guest-ID"] = guestId;
-    }
-  } else {
-    // Check if token needs refresh
-    if (isTokenExpiringSoon()) {
+  // Add guest header if guest ID exists
+  if (guestId) {
+    headers["X-Guest-ID"] = guestId;
+  }
+
+  // Add authorization header if ID token exists
+  if (idToken) {
+    // Check if token needs refresh (only for non-guest or converting guest users)
+    if (!isGuest && isTokenExpiringSoon()) {
       try {
         await refreshTokens();
       } catch (error) {
@@ -95,10 +98,7 @@ const getAuthHeaders = async () => {
       }
     }
 
-    const idToken = localStorage.getItem("id_token");
-    if (idToken) {
-      headers["Authorization"] = `Bearer ${idToken}`;
-    }
+    headers["Authorization"] = `Bearer ${idToken}`;
   }
 
   return headers;
@@ -167,22 +167,90 @@ const apiRequest = async (endpoint, options = {}) => {
 
 /**
  * Sign up a new user
+ * Note: Signup doesn't use guest headers to avoid CORS issues
  */
 export const signUp = async (email, password) => {
-  return apiRequest(API_ENDPOINTS.SIGN_UP, {
-    method: HTTP_METHODS.POST,
-    body: JSON.stringify({ email, password }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.SIGN_UP}`, {
+      method: HTTP_METHODS.POST,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message || ERROR_MESSAGES.SERVER_ERROR
+      );
+    }
+
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error.name === "AbortError") {
+      throw new Error(ERROR_MESSAGES.TIMEOUT_ERROR);
+    }
+
+    if (!navigator.onLine) {
+      throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+    }
+
+    throw error;
+  }
 };
 
 /**
  * Log in an existing user
+ * Note: Login doesn't use guest headers to avoid CORS issues
  */
 export const logIn = async (email, password) => {
-  return apiRequest(API_ENDPOINTS.LOG_IN, {
-    method: HTTP_METHODS.POST,
-    body: JSON.stringify({ email, password }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.LOG_IN}`, {
+      method: HTTP_METHODS.POST,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message || ERROR_MESSAGES.SERVER_ERROR
+      );
+    }
+
+    return data;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error.name === "AbortError") {
+      throw new Error(ERROR_MESSAGES.TIMEOUT_ERROR);
+    }
+
+    if (!navigator.onLine) {
+      throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
+    }
+
+    throw error;
+  }
 };
 
 /**
