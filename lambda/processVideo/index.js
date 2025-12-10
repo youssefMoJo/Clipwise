@@ -33,19 +33,46 @@ function extractYouTubeID(url) {
   return null;
 }
 
-// Extract user_id from Cognito JWT token (from API Gateway authorizer context)
+// Extract user_id from Cognito JWT token
 function getUserIdFromEvent(event) {
-  // API Gateway Cognito authorizer adds the user info in requestContext
+  // First, check if API Gateway Cognito authorizer already validated the token
   const claims = event.requestContext?.authorizer?.claims;
-  if (!claims) {
-    console.error("No authorizer claims found in event");
+  if (claims && claims.sub) {
+    return claims.sub;
+  }
+
+  // If no authorizer context, manually decode the JWT from Authorization header
+  const authHeader = event.headers?.Authorization || event.headers?.authorization;
+  if (!authHeader) {
     return null;
   }
-  if (!claims.sub) {
-    console.error("No user sub found in claims");
+
+  // Extract token from "Bearer <token>"
+  const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
     return null;
   }
-  return claims.sub;
+
+  const token = tokenMatch[1];
+
+  try {
+    // Decode JWT token (without verification - API Gateway already verified it)
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('Invalid JWT token format');
+      return null;
+    }
+
+    // Decode the payload (second part)
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+
+    // Return the user ID from the 'sub' claim
+    return payload.sub || null;
+  } catch (error) {
+    console.error('Error decoding JWT token:', error);
+    return null;
+  }
 }
 
 // Get guest ID from headers

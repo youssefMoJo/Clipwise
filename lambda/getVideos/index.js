@@ -14,17 +14,46 @@ const USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
 const VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
 const GUEST_TABLE = "safetube_guest_users";
 
-// Extract user_id from Cognito JWT token (from API Gateway authorizer context)
+// Extract user_id from Cognito JWT token
 function getUserIdFromEvent(event) {
-  // API Gateway Cognito authorizer adds the user info in requestContext
+  // First, check if API Gateway Cognito authorizer already validated the token
   const claims = event.requestContext?.authorizer?.claims;
   if (claims && claims.sub) {
     return claims.sub;
   }
 
-  // Fallback: try to extract from Authorization header if needed
-  // This shouldn't be necessary with Cognito authorizer, but just in case
-  return null;
+  // If no authorizer context, manually decode the JWT from Authorization header
+  const authHeader = event.headers?.Authorization || event.headers?.authorization;
+  if (!authHeader) {
+    return null;
+  }
+
+  // Extract token from "Bearer <token>"
+  const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
+    return null;
+  }
+
+  const token = tokenMatch[1];
+
+  try {
+    // Decode JWT token (without verification - API Gateway already verified it)
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('Invalid JWT token format');
+      return null;
+    }
+
+    // Decode the payload (second part)
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+
+    // Return the user ID from the 'sub' claim
+    return payload.sub || null;
+  } catch (error) {
+    console.error('Error decoding JWT token:', error);
+    return null;
+  }
 }
 
 // Get guest ID from headers

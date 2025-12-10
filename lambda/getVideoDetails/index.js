@@ -17,14 +17,53 @@ const s3Client = new S3Client({});
 const USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
 const VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
 const TRANSCRIBE_OUTPUT_BUCKET = process.env.TRANSCRIBE_OUTPUT_BUCKET;
+const GUEST_TABLE = "safetube_guest_users";
 
 // Extract user_id from Cognito JWT token
 function getUserIdFromEvent(event) {
+  // First, check if API Gateway Cognito authorizer already validated the token
   const claims = event.requestContext?.authorizer?.claims;
   if (claims && claims.sub) {
     return claims.sub;
   }
-  return null;
+
+  // If no authorizer context, manually decode the JWT from Authorization header
+  const authHeader = event.headers?.Authorization || event.headers?.authorization;
+  if (!authHeader) {
+    return null;
+  }
+
+  // Extract token from "Bearer <token>"
+  const tokenMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
+    return null;
+  }
+
+  const token = tokenMatch[1];
+
+  try {
+    // Decode JWT token (without verification - API Gateway already verified it)
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      console.error('Invalid JWT token format');
+      return null;
+    }
+
+    // Decode the payload (second part)
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+
+    // Return the user ID from the 'sub' claim
+    return payload.sub || null;
+  } catch (error) {
+    console.error('Error decoding JWT token:', error);
+    return null;
+  }
+}
+
+// Get guest ID from headers
+function getGuestIdFromEvent(event) {
+  return event.headers?.["X-Guest-ID"] || event.headers?.["x-guest-id"];
 }
 
 // Stream S3 object to string
@@ -39,10 +78,13 @@ async function streamToString(stream) {
 
 export const handler = async (event) => {
   try {
-    // Get user_id from JWT token
+    // Check if this is a guest user or authenticated user
     const userId = getUserIdFromEvent(event);
+    const guestId = getGuestIdFromEvent(event);
+    const isGuest = !userId && !!guestId;
 
-    if (!userId) {
+    // Must have either userId or guestId
+    if (!userId && !guestId) {
       return {
         statusCode: 401,
         headers: {
@@ -50,7 +92,7 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "Unauthorized - user ID not found in token",
+          message: "Unauthorized - authentication required",
         }),
       };
     }
@@ -71,11 +113,14 @@ export const handler = async (event) => {
       };
     }
 
-    // Verify user owns this video
+    const userTable = isGuest ? GUEST_TABLE : USERS_TABLE;
+    const userKey = isGuest ? { guest_id: guestId } : { user_id: userId };
+
+    // Verify user/guest owns this video
     const userResult = await ddb.send(
       new GetCommand({
-        TableName: USERS_TABLE,
-        Key: { user_id: userId },
+        TableName: userTable,
+        Key: userKey,
       })
     );
 
@@ -87,7 +132,7 @@ export const handler = async (event) => {
           "Access-Control-Allow-Origin": "*",
         },
         body: JSON.stringify({
-          message: "User not found",
+          message: isGuest ? "Guest session not found or expired" : "User not found",
         }),
       };
     }

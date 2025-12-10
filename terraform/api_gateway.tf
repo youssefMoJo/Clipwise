@@ -13,8 +13,7 @@ resource "aws_api_gateway_method" "post_method" {
   rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
   resource_id   = aws_api_gateway_resource.process.id
   http_method   = "POST"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_method" "process_options" {
@@ -350,8 +349,7 @@ resource "aws_api_gateway_method" "videos_get" {
   rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
   resource_id   = aws_api_gateway_resource.videos.id
   http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_method" "videos_options" {
@@ -435,8 +433,7 @@ resource "aws_api_gateway_method" "video_get" {
   rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
   resource_id   = aws_api_gateway_resource.video_id.id
   http_method   = "GET"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_method" "video_id_options" {
@@ -483,7 +480,7 @@ resource "aws_api_gateway_integration_response" "video_id_options_integration_re
   response_parameters = {
     "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,DELETE,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
 
   depends_on = [
@@ -514,8 +511,7 @@ resource "aws_api_gateway_method" "video_delete" {
   rest_api_id   = aws_api_gateway_rest_api.safetube_api.id
   resource_id   = aws_api_gateway_resource.video_id.id
   http_method   = "DELETE"
-  authorization = "COGNITO_USER_POOLS"
-  authorizer_id = aws_api_gateway_authorizer.cognito_authorizer.id
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "video_delete_integration" {
