@@ -15,6 +15,7 @@ const MyVideos = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("all"); // all, ready, processing, failed
   const isGuest = localStorage.getItem("is_guest") === "true";
 
   // Use React Query to fetch and cache videos
@@ -29,9 +30,28 @@ const MyVideos = () => {
     cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const videos = data?.videos || data || [];
+  const allVideos = data?.videos || data || [];
   const guestInfo = data?.guest_info || null;
   const error = queryError?.message || "";
+
+  // Sort videos by created_at (latest first) and apply filters
+  const videos = React.useMemo(() => {
+    let filtered = [...allVideos];
+
+    // Apply status filter
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((video) => video.status === filterStatus);
+    }
+
+    // Sort by created_at (latest first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.created_at || 0);
+      const dateB = new Date(b.created_at || 0);
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    return filtered;
+  }, [allVideos, filterStatus]);
 
   const handleVideoClick = (video) => {
     if (video.status === "ready") {
@@ -118,6 +138,36 @@ const MyVideos = () => {
           </VideoCount>
         </Header>
 
+        <FilterContainer>
+          <FilterLabel>Filter by status:</FilterLabel>
+          <FilterButtons>
+            <FilterButton
+              $active={filterStatus === "all"}
+              onClick={() => setFilterStatus("all")}
+            >
+              All ({allVideos.length})
+            </FilterButton>
+            <FilterButton
+              $active={filterStatus === "ready"}
+              onClick={() => setFilterStatus("ready")}
+            >
+              Ready ({allVideos.filter((v) => v.status === "ready").length})
+            </FilterButton>
+            <FilterButton
+              $active={filterStatus === "processing"}
+              onClick={() => setFilterStatus("processing")}
+            >
+              Processing ({allVideos.filter((v) => v.status === "processing").length})
+            </FilterButton>
+            <FilterButton
+              $active={filterStatus === "failed"}
+              onClick={() => setFilterStatus("failed")}
+            >
+              Failed ({allVideos.filter((v) => v.status === "failed").length})
+            </FilterButton>
+          </FilterButtons>
+        </FilterContainer>
+
         {isGuest && guestInfo && (
           <GuestBanner $limitReached={guestInfo.limit_reached}>
             <GuestBannerContent>
@@ -149,14 +199,24 @@ const MyVideos = () => {
 
         {videos.length === 0 ? (
           <EmptyState>
-            <EmptyIcon>🎬</EmptyIcon>
-            <EmptyTitle>No videos yet</EmptyTitle>
+            <EmptyIcon>
+              {allVideos.length === 0 ? "🎬" : "🔍"}
+            </EmptyIcon>
+            <EmptyTitle>
+              {allVideos.length === 0
+                ? "No videos yet"
+                : `No ${filterStatus} videos`}
+            </EmptyTitle>
             <EmptyMessage>
-              Start creating engaging clips by uploading your first video!
+              {allVideos.length === 0
+                ? "Start creating engaging clips by uploading your first video!"
+                : `You don't have any ${filterStatus} videos. Try selecting a different filter.`}
             </EmptyMessage>
-            <CTAButton onClick={() => navigate("/add-video")}>
-              Add Your First Video
-            </CTAButton>
+            {allVideos.length === 0 && (
+              <CTAButton onClick={() => navigate("/add-video")}>
+                Add Your First Video
+              </CTAButton>
+            )}
           </EmptyState>
         ) : (
           <VideoGrid>
@@ -459,6 +519,78 @@ const GuestUpgradeButton = styled.button`
 
   @media (max-width: 768px) {
     width: 100%;
+  }
+`;
+
+const FilterContainer = styled.div`
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
+
+const FilterLabel = styled.div`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.75rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const FilterButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
+`;
+
+const FilterButton = styled.button`
+  background: ${(props) =>
+    props.$active
+      ? "white"
+      : "rgba(255, 255, 255, 0.2)"};
+  color: ${(props) => (props.$active ? "#667eea" : "white")};
+  border: 2px solid
+    ${(props) =>
+      props.$active ? "white" : "rgba(255, 255, 255, 0.3)"};
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: ${(props) =>
+    props.$active
+      ? "0 4px 12px rgba(0, 0, 0, 0.2)"
+      : "0 2px 8px rgba(0, 0, 0, 0.1)"};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background: ${(props) =>
+      props.$active ? "white" : "rgba(255, 255, 255, 0.3)"};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: calc(50% - 0.25rem);
   }
 `;
 
