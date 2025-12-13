@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 import { getVideos, deleteVideo } from "../services/api";
 import VideoCard from "./VideoCard";
@@ -9,43 +10,28 @@ import Toast from "./Toast";
 
 const MyVideos = () => {
   const navigate = useNavigate();
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
   const [videoToDelete, setVideoToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [toast, setToast] = useState(null);
-  const [guestInfo, setGuestInfo] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        setLoading(true);
-        const data = await getVideos();
+  // Use React Query to fetch and cache videos
+  const {
+    data,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["videos"],
+    queryFn: getVideos,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+  });
 
-        // The API returns videos in a specific format
-        // Adjust based on your backend response structure
-        setVideos(data.videos || data || []);
-
-        // If guest user, extract guest info
-        if (data.guest_info) {
-          setGuestInfo(data.guest_info);
-        }
-
-        setError("");
-      } catch (error) {
-        console.error("Error fetching videos:", error);
-        setError(error.message || "Failed to load videos");
-        setVideos([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVideos();
-  }, []);
+  const videos = data?.videos || data || [];
+  const guestInfo = data?.guest_info || null;
+  const error = queryError?.message || "";
 
   const handleVideoClick = (video) => {
     if (video.status === "ready") {
@@ -64,10 +50,8 @@ const MyVideos = () => {
     try {
       await deleteVideo(videoToDelete.video_id);
 
-      // Remove from UI with animation
-      setVideos((prevVideos) =>
-        prevVideos.filter((v) => v.video_id !== videoToDelete.video_id)
-      );
+      // Invalidate the videos cache to refetch updated list
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
 
       setToast({
         type: "success",

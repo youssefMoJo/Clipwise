@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { getVideoDetails } from "../services/api";
 import {
   InsightsContainer,
@@ -44,34 +45,22 @@ import {
 function VideoInsights() {
   const navigate = useNavigate();
   const { videoId } = useParams();
-  const [insights, setInsights] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [videoTitle, setVideoTitle] = useState("");
-  const [videoData, setVideoData] = useState(null);
 
-  useEffect(() => {
-    const fetchInsights = async () => {
-      try {
-        setLoading(true);
-        const data = await getVideoDetails(videoId);
+  // Use React Query to fetch and cache video insights
+  const {
+    data: videoData,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["video-insights", videoId],
+    queryFn: () => getVideoDetails(videoId),
+    staleTime: 10 * 60 * 1000, // 10 minutes - insights don't change often
+    cacheTime: 30 * 60 * 1000, // 30 minutes - keep in cache longer
+  });
 
-        // Extract insights and video information from the response
-        setInsights(data.insights || data);
-        setVideoTitle(data.title || data.video_title || "Video Insights");
-        setVideoData(data);
-        setError("");
-      } catch (error) {
-        console.error("Error fetching insights:", error);
-        setError(error.message || "Failed to load insights");
-        setInsights(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInsights();
-  }, [videoId]);
+  const insights = videoData?.insights || videoData;
+  const videoTitle = videoData?.title || videoData?.video_title || "Video Insights";
+  const error = queryError?.message || "";
 
   if (loading) {
     return (

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Lottie from "lottie-react";
 import loadingAnimation from "../Assets/lottie Files/loading2.json";
 import youtubeAnimation from "../Assets/lottie Files/Youtube.json";
@@ -27,6 +28,7 @@ import {
 
 const AddVideo = ({ onVideoSubmit }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const quotes = [
     "Great things take time. Hang tight!",
     "Your insights are on the way...",
@@ -101,6 +103,9 @@ const AddVideo = ({ onVideoSubmit }) => {
 
     try {
       const data = await processVideo(videoUrl);
+
+      // Invalidate videos cache so the new video appears in the list
+      queryClient.invalidateQueries({ queryKey: ["videos"] });
 
       // Call parent callback if provided
       if (onVideoSubmit) {
