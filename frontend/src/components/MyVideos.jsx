@@ -153,7 +153,9 @@ const MyVideos = () => {
                 <FilterSubtext>
                   {filterStatus === "all"
                     ? `Showing all ${allVideos.length} videos`
-                    : `Showing ${videos.length} ${filterStatus} video${videos.length !== 1 ? 's' : ''}`}
+                    : `Showing ${videos.length} ${filterStatus} video${
+                        videos.length !== 1 ? "s" : ""
+                      }`}
                 </FilterSubtext>
               </FilterHeaderText>
             </FilterHeaderContent>
@@ -178,13 +180,15 @@ const MyVideos = () => {
               $active={filterStatus === "processing"}
               onClick={() => setFilterStatus("processing")}
             >
-              ⏳ Processing ({allVideos.filter((v) => v.status === "processing").length})
+              ⏳ Processing (
+              {allVideos.filter((v) => v.status === "processing").length})
             </FilterButton>
             <FilterButton
               $active={filterStatus === "failed"}
               onClick={() => setFilterStatus("failed")}
             >
-              ❌ Failed ({allVideos.filter((v) => v.status === "failed").length})
+              ❌ Failed ({allVideos.filter((v) => v.status === "failed").length}
+              )
             </FilterButton>
           </FilterButtons>
         </FilterContainer>
@@ -220,9 +224,7 @@ const MyVideos = () => {
 
         {videos.length === 0 ? (
           <EmptyState>
-            <EmptyIcon>
-              {allVideos.length === 0 ? "🎬" : "🔍"}
-            </EmptyIcon>
+            <EmptyIcon>{allVideos.length === 0 ? "🎬" : "🔍"}</EmptyIcon>
             <EmptyTitle>
               {allVideos.length === 0
                 ? "No videos yet"
@@ -626,7 +628,8 @@ const FilterButtons = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.75rem;
-  padding: ${(props) => (props.$expanded ? "0 1.25rem 1.25rem 1.25rem" : "0 1.25rem")};
+  padding: ${(props) =>
+    props.$expanded ? "0 1.25rem 1.25rem 1.25rem" : "0 1.25rem"};
   max-height: ${(props) => (props.$expanded ? "500px" : "0")};
   opacity: ${(props) => (props.$expanded ? "1" : "0")};
   overflow: hidden;
@@ -641,13 +644,10 @@ const FilterButtons = styled.div`
 
 const FilterButton = styled.button`
   background: ${(props) =>
-    props.$active
-      ? "white"
-      : "rgba(255, 255, 255, 0.2)"};
+    props.$active ? "white" : "rgba(255, 255, 255, 0.2)"};
   color: ${(props) => (props.$active ? "#667eea" : "white")};
   border: 2px solid
-    ${(props) =>
-      props.$active ? "white" : "rgba(255, 255, 255, 0.3)"};
+    ${(props) => (props.$active ? "white" : "rgba(255, 255, 255, 0.3)")};
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
