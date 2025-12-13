@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Lottie from "lottie-react";
 import loadingAnimation from "../Assets/lottie Files/loading2.json";
+import youtubeAnimation from "../Assets/lottie Files/Youtube.json";
 import { processVideo } from "../services/api";
 import {
   AddVideoContainer,
@@ -21,6 +22,7 @@ import {
   PlatformIcon,
   ErrorMessage,
   LoadingQuote,
+  VideoLengthNote,
 } from "./AddVideo.styled";
 
 const AddVideo = ({ onVideoSubmit }) => {
@@ -114,11 +116,17 @@ const AddVideo = ({ onVideoSubmit }) => {
         navigate("/my-videos");
       }, 2000);
     } catch (err) {
-      const errorMessage = err.message || "Failed to process video. Please try again.";
+      const errorMessage =
+        err.message || "Failed to process video. Please try again.";
 
       // Check if it's a guest limit error
-      if (errorMessage.includes("Guest video limit reached") || errorMessage.includes("limit reached")) {
-        setError("You've reached the guest upload limit. Create an account to continue uploading!");
+      if (
+        errorMessage.includes("Guest video limit reached") ||
+        errorMessage.includes("limit reached")
+      ) {
+        setError(
+          "You've reached the guest upload limit. Create an account to continue uploading!"
+        );
       } else {
         setError(errorMessage);
       }
@@ -209,8 +217,17 @@ const AddVideo = ({ onVideoSubmit }) => {
         <SupportedPlatforms>
           <PlatformsTitle>Currently Supported Platform</PlatformsTitle>
           <PlatformIcons>
-            <PlatformIcon title="YouTube">▶️</PlatformIcon>
+            <PlatformIcon title="YouTube">
+              <Lottie
+                animationData={youtubeAnimation}
+                loop={false}
+                style={{ width: "48px", height: "48px" }}
+              />
+            </PlatformIcon>
           </PlatformIcons>
+          <VideoLengthNote>
+            Videos up to 20 minutes supported • Longer videos coming soon!
+          </VideoLengthNote>
         </SupportedPlatforms>
       </AddVideoCard>
     </AddVideoContainer>

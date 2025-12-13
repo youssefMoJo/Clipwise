@@ -272,13 +272,24 @@ export const PlatformIcons = styled.div`
 
 export const PlatformIcon = styled.div`
   font-size: 1.5rem;
-  opacity: 0.6;
-  transition: all 0.3s ease;
+  opacity: 1;
   cursor: default;
+`;
 
-  &:hover {
-    opacity: 1;
-    animation: ${pulse} 0.5s ease;
+export const VideoLengthNote = styled.div`
+  font-size: 0.85rem;
+  color: #667eea;
+  text-align: center;
+  margin: 1.25rem 0 0 0;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  font-weight: 500;
+
+  &::before {
+    content: "⏱️ ";
+    margin-right: 0.25rem;
   }
 `;
 
