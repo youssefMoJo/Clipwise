@@ -42,7 +42,8 @@ function getUserIdFromEvent(event) {
   }
 
   // If no authorizer context, manually decode the JWT from Authorization header
-  const authHeader = event.headers?.Authorization || event.headers?.authorization;
+  const authHeader =
+    event.headers?.Authorization || event.headers?.authorization;
   if (!authHeader) {
     return null;
   }
@@ -58,19 +59,21 @@ function getUserIdFromEvent(event) {
   try {
     // Decode JWT token (without verification - API Gateway already verified it)
     // JWT format: header.payload.signature
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) {
-      console.error('Invalid JWT token format');
+      console.error("Invalid JWT token format");
       return null;
     }
 
     // Decode the payload (second part)
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+    const payload = JSON.parse(
+      Buffer.from(parts[1], "base64").toString("utf-8")
+    );
 
     // Return the user ID from the 'sub' claim
     return payload.sub || null;
   } catch (error) {
-    console.error('Error decoding JWT token:', error);
+    console.error("Error decoding JWT token:", error);
     return null;
   }
 }
@@ -395,7 +398,7 @@ export const handler = async (event) => {
         },
         body: JSON.stringify({
           message:
-            "Video duration exceeds 20 minutes. Maximum allowed duration is 10 minutes.",
+            "Video duration exceeds 20 minutes. Maximum allowed duration is 20 minutes.",
           duration: durationInSeconds,
         }),
       };

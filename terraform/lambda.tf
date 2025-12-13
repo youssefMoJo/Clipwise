@@ -46,7 +46,10 @@ resource "aws_lambda_function" "video_transcript_worker" {
       TRANSCRIBE_OUTPUT_BUCKET = aws_s3_bucket.transcribe_output_bucket.bucket
       SQS_QUEUE_URL            = aws_sqs_queue.video_processing_queue.id
       VIDEO_DLQ_URL            = aws_sqs_queue.video_dlq.id
-      SUPADATA_API_KEY         = var.supadata_api_key
+      SUPADATA_API_KEY_1         = var.supadata_api_key1
+      SUPADATA_API_KEY_2         = var.supadata_api_key2
+      SUPADATA_API_KEY_3         = var.supadata_api_key3
+      SUPADATA_API_KEY_4         = var.supadata_api_key4
     }
   }
 }

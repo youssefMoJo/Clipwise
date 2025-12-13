@@ -29,7 +29,25 @@ variable "RAPIDAPI_KEY_4" {
   type        = string
 }
 
-variable "supadata_api_key" {
+variable "supadata_api_key1" {
+  description = "Supadata API key for transcript generation"
+  type        = string
+  sensitive   = true
+}
+
+variable "supadata_api_key2" {
+  description = "Supadata API key for transcript generation"
+  type        = string
+  sensitive   = true
+}
+
+variable "supadata_api_key3" {
+  description = "Supadata API key for transcript generation"
+  type        = string
+  sensitive   = true
+}
+
+variable "supadata_api_key4" {
   description = "Supadata API key for transcript generation"
   type        = string
   sensitive   = true

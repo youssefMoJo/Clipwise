@@ -33,17 +33,23 @@ const RAPIDAPI_KEYS = [
   process.env.RAPIDAPI_KEY_4,
 ];
 
+const SUPADATA_API_KEYS = [
+  process.env.SUPADATA_API_KEY_1,
+  process.env.SUPADATA_API_KEY_2,
+  process.env.SUPADATA_API_KEY_3,
+  process.env.SUPADATA_API_KEY_4,
+];
+
 const DYNAMO_VIDEOS_TABLE = process.env.DYNAMO_VIDEOS_TABLE;
 const DYNAMO_USERS_TABLE = process.env.DYNAMO_USERS_TABLE;
 const TRANSCRIBE_OUTPUT_BUCKET = process.env.TRANSCRIBE_OUTPUT_BUCKET;
 const SQS_QUEUE_URL = process.env.SQS_QUEUE_URL;
 const VIDEO_DLQ_URL = process.env.VIDEO_DLQ_URL;
-const SUPADATA_API_KEY = process.env.SUPADATA_API_KEY;
 const MAX_RETRIES = 3;
 
-// Initialize Supadata client
+// Initialize Supadata client (using first key by default)
 const supadata = new Supadata({
-  apiKey: SUPADATA_API_KEY,
+  apiKey: SUPADATA_API_KEYS[0],
 });
 
 export const handler = async (event) => {
@@ -275,7 +281,7 @@ export const handler = async (event) => {
 async function getTranscriptFromAPI(youtubeLink) {
   let lastError = null;
 
-  for (const key of [SUPADATA_API_KEY, ...RAPIDAPI_KEYS].filter(Boolean)) {
+  for (const key of [...SUPADATA_API_KEYS, ...RAPIDAPI_KEYS].filter(Boolean)) {
     try {
       const client = new Supadata({ apiKey: key });
       console.log("[INFO] Calling Supadata transcript API", {
