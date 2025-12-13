@@ -12,6 +12,7 @@ import {
   EmotionalTone,
   TagsContainer,
   Tag,
+  WatchButton,
   Section,
   SectionTitle,
   SectionIcon,
@@ -47,6 +48,7 @@ function VideoInsights() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
+  const [videoData, setVideoData] = useState(null);
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -57,6 +59,7 @@ function VideoInsights() {
         // Extract insights and video information from the response
         setInsights(data.insights || data);
         setVideoTitle(data.title || data.video_title || "Video Insights");
+        setVideoData(data);
         setError("");
       } catch (error) {
         console.error("Error fetching insights:", error);
@@ -153,6 +156,16 @@ function VideoInsights() {
                 <Tag key={index}>#{tag}</Tag>
               ))}
             </TagsContainer>
+          )}
+          {videoData && (videoData.link || videoData.youtube_link) && (
+            <WatchButton
+              href={videoData.link || videoData.youtube_link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span>▶️</span>
+              Watch on YouTube
+            </WatchButton>
           )}
         </Header>
 
