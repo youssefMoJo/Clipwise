@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getVideoDetails } from "../services/api";
@@ -45,6 +45,11 @@ import {
 function VideoInsights() {
   const navigate = useNavigate();
   const { videoId } = useParams();
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Use React Query to fetch and cache video insights
   const {

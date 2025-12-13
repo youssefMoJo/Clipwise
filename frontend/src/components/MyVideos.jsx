@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -18,6 +18,11 @@ const MyVideos = () => {
   const [filterStatus, setFilterStatus] = useState("all"); // all, ready, processing, failed
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Use React Query to fetch and cache videos
   const {
