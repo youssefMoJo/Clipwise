@@ -16,6 +16,7 @@ const MyVideos = () => {
   const [toast, setToast] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all"); // all, ready, processing, failed
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const isGuest = localStorage.getItem("is_guest") === "true";
 
   // Use React Query to fetch and cache videos
@@ -139,8 +140,23 @@ const MyVideos = () => {
         </Header>
 
         <FilterContainer>
-          <FilterLabel>Filter by status:</FilterLabel>
-          <FilterButtons>
+          <FilterHeader onClick={() => setIsFilterExpanded(!isFilterExpanded)}>
+            <FilterHeaderContent>
+              <FilterIcon $expanded={isFilterExpanded}>🔍</FilterIcon>
+              <FilterHeaderText>
+                <FilterLabel>Filter by status</FilterLabel>
+                <FilterSubtext>
+                  {filterStatus === "all"
+                    ? `Showing all ${allVideos.length} videos`
+                    : `Showing ${videos.length} ${filterStatus} video${videos.length !== 1 ? 's' : ''}`}
+                </FilterSubtext>
+              </FilterHeaderText>
+            </FilterHeaderContent>
+            <ExpandIcon $expanded={isFilterExpanded}>
+              {isFilterExpanded ? "▲" : "▼"}
+            </ExpandIcon>
+          </FilterHeader>
+          <FilterButtons $expanded={isFilterExpanded}>
             <FilterButton
               $active={filterStatus === "all"}
               onClick={() => setFilterStatus("all")}
@@ -151,19 +167,19 @@ const MyVideos = () => {
               $active={filterStatus === "ready"}
               onClick={() => setFilterStatus("ready")}
             >
-              Ready ({allVideos.filter((v) => v.status === "ready").length})
+              ✅ Ready ({allVideos.filter((v) => v.status === "ready").length})
             </FilterButton>
             <FilterButton
               $active={filterStatus === "processing"}
               onClick={() => setFilterStatus("processing")}
             >
-              Processing ({allVideos.filter((v) => v.status === "processing").length})
+              ⏳ Processing ({allVideos.filter((v) => v.status === "processing").length})
             </FilterButton>
             <FilterButton
               $active={filterStatus === "failed"}
               onClick={() => setFilterStatus("failed")}
             >
-              Failed ({allVideos.filter((v) => v.status === "failed").length})
+              ❌ Failed ({allVideos.filter((v) => v.status === "failed").length})
             </FilterButton>
           </FilterButtons>
         </FilterContainer>
@@ -528,30 +544,93 @@ const FilterContainer = styled.div`
   -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
   border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 1.25rem;
   margin-bottom: 2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
 
   @media (max-width: 768px) {
     padding: 1rem;
   }
 `;
 
+const FilterHeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const FilterIcon = styled.div`
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+  transform: ${(props) => (props.$expanded ? "scale(1.1)" : "scale(1)")};
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+`;
+
+const FilterHeaderText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
 const FilterLabel = styled.div`
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
-  margin-bottom: 0.75rem;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
+const FilterSubtext = styled.div`
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+`;
+
+const ExpandIcon = styled.div`
+  font-size: 1rem;
+  color: white;
+  transition: transform 0.3s ease;
+  transform: ${(props) => (props.$expanded ? "rotate(180deg)" : "rotate(0)")};
+  padding: 0.5rem;
+`;
+
 const FilterButtons = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.75rem;
-  flex-wrap: wrap;
+  padding: ${(props) => (props.$expanded ? "0 1.25rem 1.25rem 1.25rem" : "0 1.25rem")};
+  max-height: ${(props) => (props.$expanded ? "500px" : "0")};
+  opacity: ${(props) => (props.$expanded ? "1" : "0")};
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
+    padding: ${(props) => (props.$expanded ? "0 1rem 1rem 1rem" : "0 1rem")};
   }
 `;
 
@@ -564,7 +643,7 @@ const FilterButton = styled.button`
   border: 2px solid
     ${(props) =>
       props.$active ? "white" : "rgba(255, 255, 255, 0.3)"};
-  padding: 0.625rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
   border-radius: 10px;
@@ -574,6 +653,7 @@ const FilterButton = styled.button`
     props.$active
       ? "0 4px 12px rgba(0, 0, 0, 0.2)"
       : "0 2px 8px rgba(0, 0, 0, 0.1)"};
+  white-space: nowrap;
 
   &:hover {
     transform: translateY(-2px);
@@ -587,10 +667,8 @@ const FilterButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
+    padding: 0.65rem 0.75rem;
     font-size: 0.85rem;
-    flex: 1;
-    min-width: calc(50% - 0.25rem);
   }
 `;
 

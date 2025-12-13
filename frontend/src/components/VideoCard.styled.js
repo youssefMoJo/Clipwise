@@ -75,6 +75,25 @@ export const StatusBadge = styled.span`
   border: 1.5px solid ${(props) => props.$color}40;
 `;
 
+export const TimeAgo = styled.div`
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  width: fit-content;
+
+  &::before {
+    content: '';
+  }
+`;
+
 export const ActionButton = styled.button`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
