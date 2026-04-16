@@ -58,7 +58,7 @@ resource "aws_api_gateway_integration_response" "process_options_integration_res
   status_code = aws_api_gateway_method_response.process_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
@@ -142,7 +142,7 @@ resource "aws_api_gateway_integration_response" "signup_options_integration_resp
   status_code = aws_api_gateway_method_response.signup_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
   }
@@ -226,7 +226,7 @@ resource "aws_api_gateway_integration_response" "login_options_integration_respo
   status_code = aws_api_gateway_method_response.login_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
   }
@@ -310,7 +310,7 @@ resource "aws_api_gateway_integration_response" "refresh_options_integration_res
   status_code = aws_api_gateway_method_response.refresh_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
   }
@@ -394,7 +394,7 @@ resource "aws_api_gateway_integration_response" "videos_options_integration_resp
   status_code = aws_api_gateway_method_response.videos_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
@@ -478,7 +478,7 @@ resource "aws_api_gateway_integration_response" "video_id_options_integration_re
   status_code = aws_api_gateway_method_response.video_id_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,DELETE,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
@@ -588,7 +588,7 @@ resource "aws_api_gateway_integration_response" "forgot_password_options_integra
   status_code = aws_api_gateway_method_response.forgot_password_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
   }
@@ -672,7 +672,7 @@ resource "aws_api_gateway_integration_response" "reset_password_options_integrat
   status_code = aws_api_gateway_method_response.reset_password_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
   }
@@ -840,7 +840,7 @@ resource "aws_api_gateway_integration_response" "guest_login_options_integration
   status_code = aws_api_gateway_method_response.guest_login_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }
@@ -925,7 +925,7 @@ resource "aws_api_gateway_integration_response" "convert_guest_options_integrati
   status_code = aws_api_gateway_method_response.convert_guest_options_response_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Origin"  = "'http://localhost:3000'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
     "method.response.header.Access-Control-Allow-Methods" = "'POST,OPTIONS'"
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Guest-ID'"
   }

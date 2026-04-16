@@ -291,6 +291,7 @@ async function getTranscriptFromAPI(youtubeLink) {
 
       const transcriptResult = await client.transcript({
         url: youtubeLink,
+        lang: "en",
         text: false, // use async job mode
         mode: "native",
       });
@@ -418,7 +419,7 @@ async function generateInsightsFromTranscript(transcriptText) {
     console.warn("[WARN] Zenmux API failed, falling back to RapidAPI", {
       error: zenmuxError.message,
     });
-    // responseData = await callRapidApiWithFallback(messages);
+    responseData = await callRapidApiWithFallback(messages);
   }
 
   const aiOutput =
